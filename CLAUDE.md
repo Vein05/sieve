@@ -49,6 +49,66 @@ python scoring_judge.py \
 
 All files in data/, results/, and dataset-slices/ are tracked by git LFS.
 
+## Python code standards
+
+These rules apply to all Python in this repo. Follow them when writing new code or refactoring existing code.
+
+### File and function limits
+
+- **Max 300 lines per file.** If a file exceeds this, split it by responsibility.
+- **Max 50 lines per function.** If a function exceeds this, decompose into named helpers.
+- **Max 4 levels of nesting.** If deeper, extract the inner block into a function.
+- **Max 5 parameters per function.** Group related params into a dataclass or TypedDict if more are needed.
+
+### No magic numbers or strings
+
+- Every numeric threshold, weight, or limit must be a named constant at module level or in a config file.
+- String literals used as keys, modes, or categories must be constants or enums.
+- Hardcoded paths, URLs, and API keys are forbidden. Use constants, config files, or CLI args.
+
+### Imports
+
+- All imports at module top level. No inline/deferred imports unless guarding an optional dependency (document why with a comment).
+- No wildcard imports (`from x import *`).
+- No circular imports. If two modules need each other, extract shared code into a third.
+
+### Error handling
+
+- No bare `except Exception: pass`. Always log the exception or re-raise.
+- No silent `.get()` with default `0` for keys that should exist. If a key is expected, access it directly and let it fail loud.
+
+### Comments and docstrings
+
+- No stale, TODO, or "work-in-progress" comments. Delete or fix.
+- No comments that restate what the code does. Only comment the WHY when non-obvious.
+- No multi-paragraph docstrings. One line max.
+
+### Data and constants
+
+- Mutable module-level collections (`set`, `dict`, `list`) used as constants must be `frozenset`, `MappingProxyType`, or `tuple`.
+- Dataset-specific vocabularies (entity lists, concept specs) go in `configs/*.json`, not in Python source.
+- Constants used by multiple modules go in one canonical location and are imported everywhere.
+
+### Entry points
+
+- Every script must have an `if __name__ == "__main__":` guard.
+- Shared CLI args (`--provider`, `--model`, `--parallelism`, etc.) must use a shared `add_common_args(parser)` helper, not copy-pasted argparse blocks.
+
+### Type safety
+
+- All function signatures must have type annotations.
+- Use `from __future__ import annotations` in every file.
+- Prefer dataclasses over raw dicts for structured data with known keys.
+
+### Testing
+
+- New code must have tests. No exceptions.
+- Tests go in `tests/` mirroring the source tree (e.g., `tests/assembly_methods/test_common.py`).
+
+### Thread safety
+
+- No module-level mutable dicts used as caches under ThreadPoolExecutor without a lock or `functools.lru_cache`.
+
 ## Provenance
 
 Forked from `memory-eligibility-feasibility` repo (2026-07-13). Original results preserved there.
