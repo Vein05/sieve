@@ -7,10 +7,11 @@ __pycache__/
 dist/
 build/
 
-# Environment
+# Environment and credentials
 .env
 .venv/
 venv/
+ssh.sh
 
 # OS
 .DS_Store
