@@ -5,6 +5,7 @@ from __future__ import annotations
 from collections import Counter
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import json
+import logging
 from datetime import datetime
 from pathlib import Path
 import re
@@ -12,7 +13,7 @@ from time import perf_counter
 import traceback
 from typing import Any, Callable
 
-from reader.client import generate_answer
+from reader.client import DEFAULT_APP_URL, generate_answer
 from reader.prompts import _COMPACT_READER_VARIANTS, build_answer_generation_prompt
 from reader.scoring import evaluate_run, harmful_use_flags, quality_metrics, quality_metrics_for_row
 from compiler.llm_compiler import llm_compile, format_llm_evidence
@@ -884,8 +885,8 @@ def _run_phase1_step(
                 generation = dict(generation)
                 generation["clean_answer"] = _span.answer
                 generation["raw_answer"] = _span.answer
-        except Exception:
-            pass  # MiniLM is optional; fall through to original answer
+        except Exception as e:
+            logging.warning("MiniLM fallback failed: %s", e)
 
     quality = quality_metrics_for_row(row, str(row["query"]), generation["clean_answer"], str(row["reference_answer"]))
     flags = harmful_use_flags(
@@ -1034,7 +1035,7 @@ def run_phase1(
     temperature: float,
     parallelism: int = 8,
     api_key_env: str = "OPENROUTER_API_KEY",
-    app_url: str = "https://anonymous.4open.science/r/from-reliable-to-random-BB62",
+    app_url: str = DEFAULT_APP_URL,
     app_title: str = "anonymous-rag-compression-artifact",
     prompt_variant: str = "baseline",
     sieve_reader_mode: str = "calibrated_default",

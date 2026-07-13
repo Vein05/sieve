@@ -39,8 +39,6 @@ _PROCESS_POOL_TASK_ROWS = 5
 
 def _configure_worker_runtime() -> None:
     """Apply conservative thread limits inside subprocesses."""
-    import torch
-
     os.environ.setdefault("TOKENIZERS_PARALLELISM", "false")
     os.environ.setdefault("MINILM_FORCE_CPU", "1")
     os.environ.setdefault("OMP_NUM_THREADS", "1")
@@ -49,10 +47,14 @@ def _configure_worker_runtime() -> None:
     os.environ.setdefault("NUMEXPR_NUM_THREADS", "1")
     if platform.system() == "Darwin":
         os.environ.setdefault("VECLIB_MAXIMUM_THREADS", "1")
-    torch.set_num_threads(1)
     try:
-        torch.set_num_interop_threads(1)
-    except RuntimeError:
+        import torch  # optional: only needed when compiler uses neural models
+        torch.set_num_threads(1)
+        try:
+            torch.set_num_interop_threads(1)
+        except RuntimeError:
+            pass
+    except ImportError:
         pass
 
 
@@ -141,15 +143,6 @@ def normalize_systems(systems: list[str] | None = None) -> list[str]:
     return normalized
 
 
-def _controller_precompute_worker_count(row_count: int) -> int:
-    return _resolve_process_worker_policy(
-        row_count,
-        env_var="MEMORY_SELECTOR_PRECOMPUTE_WORKERS",
-        default_cap=_AUTO_CONTROLLER_PRECOMPUTE_MAX_WORKERS,
-        min_rows=_AUTO_CONTROLLER_PRECOMPUTE_MIN_ROWS,
-    )[0]
-
-
 def _run_example_worker(payload: tuple[dict[str, Any], dict[str, Any]]) -> dict[str, Any]:
     row, controller_config = payload
     return run_example(row, controller_config)
@@ -183,7 +176,7 @@ def _controller_results_for_rows(
     *,
     progress_callback: Callable[[str], None] | None = None,
 ) -> list[dict[str, Any]]:
-    worker_count = _controller_precompute_worker_count(len(rows))
+    worker_count = _controller_precompute_worker_policy(len(rows))[0]
     if worker_count == 1:
         _configure_worker_runtime()
         return [run_example(row, controller_config) for row in rows]
@@ -466,8 +459,6 @@ def selected_texts_for_system(
         for text in meta.get("compiled_texts", [])
         if str(text).strip()
     ]
-    if compiler_authoritative and compiled_texts:
-        return compiled_texts
     if compiled_texts:
         return compiled_texts
     if isinstance(rendered_package, dict):

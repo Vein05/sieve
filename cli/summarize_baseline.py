@@ -31,6 +31,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+from controller.logic import token_count
 from reader.client import (
     DEFAULT_OPENROUTER_BASE_URL,
     generate_answer,
@@ -196,7 +197,7 @@ def _compile_row(
         "compiler_input_tokens": summary_result.get("compiler_input_tokens", 0),
         "compiler_output_tokens": summary_result.get("compiler_output_tokens", 0),
         "compiler_latency_ms": summary_result.get("compiler_latency_ms", 0.0),
-        "selected_memory_tokens": sum(len(str(t).split()) for t in retrieved_memories),
+        "selected_memory_tokens": sum(token_count(str(t)) for t in retrieved_memories),
     }
 
 
@@ -251,10 +252,10 @@ def _read_row(
         "raw_answer": generation.get("raw_answer", ""),
         "system": SYSTEM_NAME,
         "success": generation.get("success", False),
-        "quality_score": quality.get("quality_score", 0),
-        "quality_norm": quality.get("quality_norm", 0.0),
-        "exact_correct": quality.get("exact_correct", 0),
-        "token_f1": quality.get("token_f1", 0.0),
+        "quality_score": quality["quality_score"],
+        "quality_norm": quality["quality_score"] / 2.0,
+        "exact_correct": int(quality["quality_label"] == "correct"),
+        "token_f1": quality["token_f1"],
         "prompt_tokens": generation.get("prompt_tokens", 0),
         "completion_tokens": generation.get("completion_tokens", 0),
         "latency_ms": generation.get("latency_ms", 0.0),

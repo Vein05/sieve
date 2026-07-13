@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 """Per-row mechanism attribution for naive vs SIEVE across 7 models."""
 
+from __future__ import annotations
+
 import json
 import re
 from pathlib import Path
@@ -56,7 +58,8 @@ def load_model(slug):
 def classify_rows(slug):
     naive_answers, naive_scores, sieve_scores = load_model(slug)
     ids = sorted(naive_scores.keys())
-    assert len(ids) == 500, f"{slug}: {len(ids)} rows"
+    if not ids:
+        raise ValueError(f"{slug}: no overlapping example IDs between naive and sieve judge scores")
 
     counts = {"unknown_correct": 0, "wrong_correct": 0, "correct_wrong": 0, "no_change": 0}
     naive_correct = 0

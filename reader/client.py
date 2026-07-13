@@ -13,6 +13,8 @@ from reader.pali_shims import clean_generated_answer
 
 DEFAULT_OLLAMA_BASE_URL = "http://127.0.0.1:11434"
 DEFAULT_OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1"
+DEFAULT_APP_URL = "https://anonymous.4open.science/r/from-reliable-to-random-BB62"
+DEFAULT_SEED = 42
 OPENROUTER_MAX_RETRIES = 3
 
 
@@ -144,7 +146,7 @@ def _generate_via_openrouter(
         "messages": [{"role": "user", "content": prompt}],
         "temperature": temperature,
         "max_tokens": max_tokens,
-        "seed": 42,
+        "seed": DEFAULT_SEED,
     }
     if _provider_routing:
         payload["provider"] = _provider_routing
@@ -213,7 +215,7 @@ def generate_answer(
     timeout_s: float = 60.0,
     max_tokens: int = 64,
     api_key_env: str = "OPENROUTER_API_KEY",
-    app_url: str = "https://anonymous.4open.science/r/from-reliable-to-random-BB62",
+    app_url: str = DEFAULT_APP_URL,
     app_title: str = "anonymous-rag-compression-artifact",
     provider_routing: dict[str, Any] | None = None,
 ) -> dict[str, Any]:

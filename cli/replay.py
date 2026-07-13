@@ -51,7 +51,7 @@ from typing import Any
 # Ensure scripts/ is on the path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from reader.client import generate_answer
+from reader.client import DEFAULT_APP_URL, generate_answer
 from reader.scoring import evaluate_run, quality_metrics_for_row
 
 
@@ -324,6 +324,7 @@ def _replay_row(
         "completion_tokens": generation.get("completion_tokens", 0),
         "latency_ms": generation.get("latency_ms", 0),
         "success": generation.get("success", False),
+        "error": generation.get("error"),
         # Safety flags (not re-evaluated in replay)
         "used_stale_memory": 0,
         "used_contradictory_memory": 0,
@@ -457,7 +458,7 @@ def cmd_replay(args: argparse.Namespace) -> None:
                 max_tokens=args.max_tokens,
                 temperature=0.0,
                 api_key_env=args.api_key_env,
-                app_url="https://anonymous.4open.science/r/from-reliable-to-random-BB62",
+                app_url=DEFAULT_APP_URL,
                 app_title="anonymous-rag-compression-artifact",
                 provider_routing=_provider_routing,
             ): (i, entry["example_id"])

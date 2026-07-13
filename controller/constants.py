@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import json
 import re
+from pathlib import Path
 
 
 STOPWORDS = {
@@ -347,154 +349,15 @@ CURRENT_STATE_QUERY_PATTERNS = (
     "ignored in future",
 )
 
-CONCEPT_SPECS: dict[str, dict[str, list[str]]] = {
-    "support_group_event": {
-        "patterns": ["lgbtq", "support group", "conference", "pride parade"],
-        "answer_markers": ["support group"],
-    },
-    "summer_research": {
-        "patterns": ["research", "researching", "adoption agencies", "start a family"],
-        "answer_markers": ["research", "researching", "adoption agencies"],
-    },
-    "charity_awareness": {
-        "patterns": ["charity race", "awareness", "mental health"],
-        "answer_markers": ["mental health", "awareness"],
-    },
-    "classic_books": {
-        "patterns": ["classic", "childrens books", "books"],
-        "answer_markers": ["classic", "books"],
-    },
-    "job_loss": {
-        "patterns": ["banker", "job", "lose", "lost"],
-        "answer_markers": ["banker", "job", "lost"],
-    },
-    "car_donation": {
-        "patterns": ["donate", "donated", "old car", "car"],
-        "answer_markers": ["donate", "donated", "old car"],
-    },
-    "screenplay_completion": {
-        "patterns": ["screenplay", "finished", "finish", "first screenplay"],
-        "answer_markers": ["screenplay", "finished", "finish"],
-    },
-    "ankle_injury": {
-        "patterns": ["ankle", "injury", "sprain", "sprained"],
-        "answer_markers": ["ankle", "injury", "sprained"],
-    },
-    "diet": {
-        "patterns": ["diet", "vegetarian", "pescatarian", "vegan", "fish", "tofu"],
-        "answer_markers": ["vegetarian", "pescatarian", "vegan", "fish"],
-    },
-    "airport_choice": {
-        "patterns": ["airport", "ohare", "midway", "flight", "flights"],
-        "answer_markers": ["airport", "ohare", "midway"],
-    },
-    "meeting_schedule": {
-        "patterns": ["product sync", "sync", "tuesday", "wednesday", "pm", "quarter"],
-        "answer_markers": ["product sync", "sync", "tuesday", "wednesday", "pm"],
-    },
-    "laptop_device": {
-        "patterns": ["laptop", "charger", "macbook", "thinkpad", "usb c", "hub"],
-        "answer_markers": ["laptop", "charger", "macbook", "thinkpad"],
-    },
-    "residence": {
-        "patterns": ["city", "live", "lives", "moved", "austin", "chicago"],
-        "answer_markers": ["live", "lives", "moved", "austin", "chicago"],
-    },
-    "class_course": {
-        "patterns": [
-            "class",
-            "course",
-            "summer",
-            "data mining",
-            "distributed systems",
-            "enrolled",
-            "switched",
-        ],
-        "answer_markers": [
-            "class",
-            "course",
-            "data mining",
-            "distributed systems",
-            "enrolled",
-            "switched",
-        ],
-    },
-    "major": {
-        "patterns": ["major", "biology", "psychology", "medical school"],
-        "answer_markers": ["major", "biology", "psychology"],
-    },
-    "dog_food": {
-        "patterns": ["dog food", "dog", "formula", "salmon", "chicken", "pet store"],
-        "answer_markers": ["dog food", "formula", "salmon", "chicken"],
-    },
-    "hotel_booking": {
-        "patterns": ["hotel", "conference", "harbor hotel", "riverfront suites", "booked"],
-        "answer_markers": ["hotel", "harbor", "riverfront", "suites", "booked"],
-    },
-    "invoice_status": {
-        "patterns": ["invoice", "sent", "send", "pending", "reply", "follow up"],
-        "answer_markers": ["invoice", "sent", "pending", "send"],
-    },
-    "work_schedule": {
-        "patterns": ["weekend", "weekends", "weekday", "weekdays", "shifts", "coverage", "role"],
-        "answer_markers": ["weekend", "weekends", "weekday", "weekdays", "shifts"],
-    },
-    "museum_tickets": {
-        "patterns": ["museum", "tickets", "ticket", "sister", "two beds"],
-        "answer_markers": ["museum", "tickets", "ticket", "sister"],
-    },
-    "gym_membership": {
-        "patterns": ["gym", "membership", "lakeside", "north loop", "spin class", "joined"],
-        "answer_markers": ["gym", "membership", "lakeside", "north loop", "joined"],
-    },
-    "pet_trip": {
-        "patterns": ["dog", "trip", "pet friendly", "travel bowl", "parents"],
-        "answer_markers": ["dog", "pet friendly", "travel bowl", "parents"],
-    },
-    "paper_submission": {
-        "patterns": ["paper", "draft", "submit", "submission", "professor", "edit"],
-        "answer_markers": ["paper", "draft", "submit", "submission"],
-    },
-    "food_choice": {
-        "patterns": ["lunch", "spicy noodles", "coffee", "oat milk", "dessert"],
-        "answer_markers": ["lunch", "spicy noodles", "coffee", "oat milk", "dessert"],
-    },
-    "writing_style": {
-        "patterns": [
-            "recruiter",
-            "follow up",
-            "email tone",
-            "professional",
-            "concise",
-            "thank you note",
-            "wording",
-        ],
-        "answer_markers": [
-            "recruiter",
-            "follow up",
-            "email tone",
-            "professional",
-            "concise",
-            "wording",
-        ],
-    },
-    "gift_choice": {
-        "patterns": ["birthday gift", "coworker", "tea", "mugs", "mug"],
-        "answer_markers": ["gift", "coworker", "tea", "mugs", "mug"],
-    },
-    "workout_music": {
-        "patterns": ["workout", "playlist", "upbeat", "pop", "dance", "tracks"],
-        "answer_markers": ["workout", "playlist", "upbeat", "pop", "dance"],
-    },
-    "rainy_activities": {
-        "patterns": ["rainy", "weekend", "art museums", "quiet cafes", "museums", "cafes"],
-        "answer_markers": ["rainy", "weekend", "museums", "cafes"],
-    },
-    "flight_seat": {
-        "patterns": ["seat", "aisle", "flight", "long flights"],
-        "answer_markers": ["seat", "aisle", "flight"],
-    },
-}
+_CONCEPT_SPECS_PATH = Path(__file__).resolve().parent.parent / "configs" / "concept_specs.json"
+
+
+def _load_concept_specs() -> dict[str, dict[str, list[str]]]:
+    """Load dataset-specific concept specs from configs/concept_specs.json."""
+    return json.loads(_CONCEPT_SPECS_PATH.read_text(encoding="utf-8"))
+
+
+CONCEPT_SPECS: dict[str, dict[str, list[str]]] = _load_concept_specs()
 
 TOKEN_RE = re.compile(r"[a-z0-9]+")
 DATE_RE = re.compile(r"\b(\d{4})[-/](\d{2})(?:[-/](\d{2}))?\b")

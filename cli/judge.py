@@ -418,11 +418,11 @@ def main() -> None:
         judge_mode = _detect_judge_mode(outputs)
     print(f"Judge mode: {judge_mode}")
 
-    unique_payloads: Dict[Tuple[str, str, str], dict] = {}
+    unique_payloads: Dict[Tuple[str, str, str, str], dict] = {}
     payloads: List[dict] = []
 
     for o in outputs:
-        key = (o["question"], o["reference_answer"], o["generated_answer"])
+        key = (o["question"], o["reference_answer"], o["generated_answer"], o.get("question_type", ""))
         if key not in unique_payloads:
             pinfo = {
                 "question": o["question"],
@@ -439,16 +439,16 @@ def main() -> None:
 
     results = grade_all(payloads, args.provider, args.model, args.parallelism, judge_mode=judge_mode)
 
-    judged_map: Dict[Tuple[str, str, str], dict] = {}
+    judged_map: Dict[Tuple[str, str, str, str], dict] = {}
     for r in results:
-        key = (r["question"], r["ref"], r["gen"])
+        key = (r["question"], r["ref"], r["gen"], r.get("question_type", ""))
         judged_map[key] = r
 
     systems: Dict[str, List[dict]] = {}
     system_score_maps: Dict[str, Dict[str, int]] = {}
 
     for o in outputs:
-        key = (o["question"], o["reference_answer"], o["generated_answer"])
+        key = (o["question"], o["reference_answer"], o["generated_answer"], o.get("question_type", ""))
         judged = judged_map[key]
 
         o["judge_score_v2"] = judged["judge_score"]
