@@ -1,0 +1,15 @@
+[project]
+name = "sieve"
+version = "0.1.0"
+description = "Post-retrieval evidence compilation pipeline for conversational memory QA"
+requires-python = ">=3.11"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+]
+filterwarnings = [
+    "ignore::DeprecationWarning",
+]
