@@ -1,0 +1,68 @@
+{
+  "controller_version": "rule_v0_with_concepts",
+  "signals": [
+    "retrieval_prior",
+    "necessity",
+    "freshness",
+    "contradiction_risk",
+    "redundancy_or_unnecessary_personalization"
+  ],
+  "weights": {
+    "retrieval_prior": 0.35,
+    "necessity": 0.35,
+    "freshness": 0.2,
+    "contradiction_risk": -0.3,
+    "redundancy_or_unnecessary_personalization": -0.2
+  },
+  "score_range": {
+    "min": 0.0,
+    "max": 1.0,
+    "clamp": true
+  },
+  "profiling": {
+    "use_concept_specs": true
+  },
+  "thresholds": {
+    "commit_score_gte": 0.55,
+    "hard_suppress": {
+      "contradiction_risk_gte": 0.8,
+      "freshness_equals": 0.0,
+      "require_newer_family_alternative": true,
+      "redundancy_or_unnecessary_personalization_gte": 0.9,
+      "necessity_lt": 0.4
+    },
+    "positive_control_fallback": {
+      "enabled": true,
+      "necessity_gte": 0.65,
+      "contradiction_risk_lt": 0.4,
+      "redundancy_or_unnecessary_personalization_lt": 0.6
+    }
+  },
+  "selection": {
+    "sort_by": "score_desc",
+    "max_selected": 3,
+    "max_memory_tokens": null,
+    "log_selected_token_count": true
+  },
+  "reason_codes": [
+    "REL_HIGH",
+    "REL_LOW",
+    "NECESSARY_FOR_QUERY",
+    "NOT_NECESSARY_FOR_QUERY",
+    "FRESH_OR_UNCONTESTED",
+    "STALE_SUPERSEDED",
+    "CONTRADICTION_RISK",
+    "REDUNDANT_WITH_STRONGER_MEMORY",
+    "UNNECESSARY_PERSONALIZATION",
+    "COMMITTED_BY_THRESHOLD",
+    "SUPPRESSED_BY_THRESHOLD",
+    "SUPPRESSED_BY_HARD_RULE",
+    "POSITIVE_CONTROL_FALLBACK",
+    "DROPPED_BY_BUDGET"
+  ],
+  "notes": [
+    "This is the concept-assisted dev ablation for rule_v0.",
+    "Use it only for direct comparisons against the generic default controller.",
+    "The default controller config disables concept-specific lexicons."
+  ]
+}

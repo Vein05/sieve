@@ -1,0 +1,34 @@
+{
+  "spec_version": "v2_perturbation_spec_v0",
+  "objective": "Select the smallest memory subset that preserves correct full-evidence behavior under budget.",
+  "families": {
+    "ordering_change": {
+      "enabled": true,
+      "rotate_by": 1
+    },
+    "redundancy_active_context": {
+      "enabled": true,
+      "copy_selected_memories_into_active_context": true
+    },
+    "stale_update": {
+      "enabled": true,
+      "require_conflicting_pair": true,
+      "move_stale_candidate_to_front": true
+    },
+    "distractor_injection": {
+      "enabled": true,
+      "max_injected": 1,
+      "prefer_high_query_overlap": true
+    }
+  },
+  "splits": {
+    "group_by": "source_family",
+    "train_ratio": 0.8,
+    "dev_ratio": 0.1,
+    "test_ratio": 0.1
+  },
+  "notes": [
+    "This spec defines the first benchmark-agnostic perturbation families for v2.",
+    "It is intended for perturbation generation and leakage-safe split assignment, not for v1 controller evaluation."
+  ]
+}
