@@ -1,10 +1,10 @@
 # SIEVE Experiment Repo
 
-Clean fork of the SIEVE post-retrieval evidence compilation pipeline for new experiments.
+This is a NEW paper building on top of SIEVE, the post-retrieval evidence compilation method. The original conversational memory evaluation paper is already published at EMNLP 2025 Findings. We are NOT rewriting that paper. This repo is for a standalone SIEVE method paper that extends and improves the compiler, targeting a main conference venue.
 
 ## What this is
 
-SIEVE compresses BM25-retrieved conversation memories into structured evidence before passing to a reader LLM. The core finding: compression helps small readers (+13pp) but becomes a coin flip for strong readers (+0.8pp). This repo is for running new experiments with improved compilers and more models.
+SIEVE compresses BM25-retrieved conversation memories into structured evidence before passing to a reader LLM. The original finding (from the EMNLP Findings paper): compression helps small readers (+13pp) but becomes a coin flip for strong readers (+0.8pp). This repo extends that work with learned compilers, GPU-accelerated retrieval, and reader-adaptive compilation to close the gap for strong readers.
 
 ## Running experiments
 
