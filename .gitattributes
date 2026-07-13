@@ -1,0 +1,4 @@
+data/compilation_cache/*.json filter=lfs diff=lfs merge=lfs -text
+results/**/*.json filter=lfs diff=lfs merge=lfs -text
+results/**/*.jsonl filter=lfs diff=lfs merge=lfs -text
+dataset-slices/*.jsonl filter=lfs diff=lfs merge=lfs -text
