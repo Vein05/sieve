@@ -105,6 +105,28 @@ Retrieved memories:
 
 Output JSON only, no markdown fencing:"""
 
+_ORDERING_PROMPT = """\
+You are an evidence compiler for a conversational memory QA system.
+
+Given the user's question and retrieved memory chunks, extract ALL relevant evidence.
+The question asks about chronological or sequential ordering. For each item, extract the
+associated date, timestamp, or ordinal position so the correct order can be determined.
+
+Output a JSON object with:
+- "facts": list of concise factual statements, each including the date/time or position
+- "temporal": dates or time references that establish the ordering
+- "answer_hint": the items listed in the requested order (short phrase)
+- "confidence": "high", "medium", or "low"
+
+Be precise about dates and ordering signals.
+{date_context}
+Question: {question}
+
+Retrieved memories:
+{memories}
+
+Output JSON only, no markdown fencing:"""
+
 # ── query type detection ──────────────────────────────────────────────
 
 _ASSISTANT_RECALL_PATTERNS = [

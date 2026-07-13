@@ -402,8 +402,8 @@ _COLOR_VALUE_RE = re.compile(
     re.IGNORECASE,
 )
 _DIRECT_OBJECT_VALUE_VERBS = {"bake", "bring", "buy", "cook", "make", "order", "prepare", "purchase", "try"}
-_DIRECT_OBJECT_TRAILING_PREPS = {"for", "with", "from", "at", "because", "since", "after", "before"}
-_PRODUCT_VALUE_VERBS = {"buy", "get", "order", "pick", "purchase", "replace", "swap", "use"}
+_DIRECT_OBJECT_TRAILING_PREPS = frozenset({"for", "with", "from", "at", "because", "since", "after", "before"})
+_PRODUCT_VALUE_VERBS = frozenset({"buy", "get", "order", "pick", "purchase", "replace", "swap", "use"})
 _TRAILING_VALUE_SPLIT_RE = re.compile(
     r"\b(?:and|but|because|which|who|that|where|when|while)\b",
     re.IGNORECASE,
@@ -412,8 +412,8 @@ _DIRECT_OBJECT_VALUE_CLEANUPS = (
     re.compile(r"\brecipe\b$", re.IGNORECASE),
     re.compile(r"\b(?:service|subscription|plan)\b$", re.IGNORECASE),
 )
-_LOCATION_MODIFIER_TOKENS = {"early", "late", "mid"}
-_NON_LOCATION_DEVICE_TOKENS = {
+_LOCATION_MODIFIER_TOKENS = frozenset({"early", "late", "mid"})
+_NON_LOCATION_DEVICE_TOKENS = frozenset({
     "android",
     "app",
     "apps",
@@ -435,7 +435,7 @@ _NON_LOCATION_DEVICE_TOKENS = {
     "tablet",
     "xbox",
     "youtube",
-}
+})
 _OCCUPATION_VALUE_PATTERNS = (
     re.compile(
         r"\b(?:my|our)\s+(?:current|previous|old|new)?\s*(?:occupation|job|role|profession)\s+(?:is|was|as)\s+(?P<value>[^,.!?;|]+)",
