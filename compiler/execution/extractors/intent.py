@@ -6,12 +6,13 @@ import re
 from typing import Any
 
 from evidence.schema import EvidencePlan
-from ...runtime.bindings import (
-    _normalize_text,
-    _aggregate_slot,
-    _requested_duration_unit,
+from ...runtime.text import _normalize_text, _requested_duration_unit
+from ..requirements import (
+    aggregate_slot as _aggregate_slot,
+    is_aggregate_schema,
+    is_count_aggregate_schema,
+    is_direct_lookup_schema,
 )
-from ..requirements import is_aggregate_schema, is_count_aggregate_schema, is_direct_lookup_schema
 
 def _numeric_query_requires_money(row: dict[str, Any]) -> bool:
     normalized = _normalize_text(str(row.get("query", "")))

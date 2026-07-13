@@ -158,7 +158,7 @@ def _detect_query_type(query: str) -> str:
     if any(p in q for p in _ASSISTANT_RECALL_PATTERNS):
         return "assistant_recall"
     if any(p in q for p in _ORDERING_PATTERNS):
-        return "counting"  # reuse counting path (needs wide coverage + batched mode)
+        return "ordering"
     if any(p in q for p in _COUNTING_PATTERNS):
         return "counting"
     if any(p in q for p in _KNOWLEDGE_UPDATE_PATTERNS):
@@ -171,6 +171,7 @@ def _select_prompt(query_type: str) -> str:
         "assistant_recall": _ASSISTANT_RECALL_PROMPT,
         "knowledge_update": _KNOWLEDGE_UPDATE_PROMPT,
         "counting": _COUNTING_PROMPT,
+        "ordering": _ORDERING_PROMPT,
     }.get(query_type, _DEFAULT_PROMPT)
 
 

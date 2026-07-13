@@ -4,21 +4,19 @@ from __future__ import annotations
 
 from typing import Any
 
+from shared.nlp import CandidateView, cached_build_profile
+from evidence.schema import EvidencePlan
+from evidence.units import EvidenceUnit
+from retrieval.query_targets import QueryTargets
 from ..runtime.bindings import (
-    CandidateView,
-    EvidencePlan,
-    EvidenceUnit,
-    QueryTargets,
-    _best_matching_entity,
-    _missing_role_gain,
-    _query_focus_tokens,
     _selected_unit_roles,
-    _unit_has_strong_focus_alignment,
     _unit_requirement_tags_cached,
-    _unit_semantic_gate_allows_anchor,
-    cached_build_profile,
     score_evidence_unit,
 )
+from ..runtime.focus import _query_focus_tokens
+from ..runtime.roles import _missing_role_gain
+from ..runtime.semantic import _unit_has_strong_focus_alignment, _unit_semantic_gate_allows_anchor
+from ..validation.compatibility import _best_matching_entity
 from evidence.units import build_evidence_units_for_views
 from .coverage import _coverage_for_selected_units
 from .greedy import _select_greedy_units

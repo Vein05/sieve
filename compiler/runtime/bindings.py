@@ -84,7 +84,13 @@ from .focus import (
     _token_stems,
 )
 from .roles import _PAIRED_ROLE_NAMES, _missing_role_gain, _role_priority
-from ..validation.compatibility import _SOFT_INVALID_REASONS
+from ..validation.compatibility import (
+    _SOFT_INVALID_REASONS,
+    _best_matching_entity,
+    _slot_attribute_compatible,
+    _slot_entity_match,
+)
+from .semantic import score_evidence_unit as _semantic_score_evidence_unit
 
 _QUESTION_UNIT_RE = re.compile(
     r"\b(days?|weeks?|months?|years?|hours?|minutes?|mph|mbps|gb|gb|inch|inches|items?|projects?|shirts?|films?|bikes?)\b",
@@ -764,14 +770,6 @@ def _slot_bindings(
     return bindings
 
 
-def _time_unit_from_query(row: dict[str, Any]) -> str:
-    normalized = _normalize_text(str(row.get("query", "")))
-    for unit in ("day", "week", "month", "year", "hour", "minute"):
-        if re.search(rf"\b{unit}s?\b", normalized):
-            return unit
-    return "day"
-
-
 def _copy_binding_with_text(binding: dict[str, Any], text: str) -> dict[str, Any]:
     updated = dict(binding)
     updated["text"] = str(text).strip()
@@ -1075,34 +1073,3 @@ def _slot_bindings_with_display_text(
 
 
 
-from .focus import *  # noqa: F401,F403
-from .entities import *  # noqa: F401,F403
-from .semantic import (  # noqa: F401
-    _binding_semantic_support,
-    _has_first_person_signal,
-    _query_needs_personal_semantic_gate,
-    _resolve_compiler_score_weights,
-    _score_feature_bundle,
-    _semantic_sufficiency_analysis,
-    _strong_direct_span_source,
-    _unit_has_strong_focus_alignment,
-    _unit_semantic_gate_allows_anchor,
-    _unit_semantic_support,
-    score_evidence_unit as _semantic_score_evidence_unit,
-)
-from ..validation.compatibility import (  # noqa: F401
-    _best_matching_entity,
-    _binding_focus_overlap_tokens,
-    _binding_matches_query_focus,
-    _binding_quality_score,
-    _binding_value_from_session_header,
-    _direct_value_requires_entity_match,
-    _event_matches_expected,
-    _is_generic_fragment,
-    _slot_allows_descriptive_fragment,
-    _slot_attribute_compatible,
-    _slot_entity_match,
-    _slot_expected_entities,
-)
-
-__all__ = [name for name in globals() if not name.startswith("__")]

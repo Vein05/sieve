@@ -8,7 +8,19 @@ from typing import Any
 from ..runtime import bindings as rb
 from ..runtime import entities as re_entities
 from ..runtime import text as rtext
+from ..runtime.semantic import _resolve_compiler_score_weights
 from ..validation.answer_type import validate_slot_binding as _validate_slot_binding_impl
+from ..validation.compatibility import (
+    _binding_focus_overlap_tokens,
+    _binding_matches_query_focus,
+    _binding_quality_score,
+    _binding_value_from_session_header,
+    _direct_value_requires_entity_match,
+    _event_matches_expected,
+    _is_generic_fragment,
+    _slot_allows_descriptive_fragment,
+    _slot_expected_entities,
+)
 from ..validation.invariants import schema_grounding_analysis as _schema_grounding_analysis_impl
 from ..validation import rescue as rescue_validation
 from ..evidence_planner import plan_evidence
@@ -124,16 +136,16 @@ def _validate_slot_binding(
         focus_tokens=focus_tokens,
         binding_source_text=rb._binding_source_text,
         normalize_text=rb._normalize_text,
-        is_generic_fragment=rb._is_generic_fragment,
+        is_generic_fragment=_is_generic_fragment,
         query_expects_time_literal=rb._query_expects_time_literal,
-        binding_value_from_session_header=rb._binding_value_from_session_header,
+        binding_value_from_session_header=_binding_value_from_session_header,
         best_matching_entity=rb._best_matching_entity,
-        direct_value_requires_entity_match=rb._direct_value_requires_entity_match,
-        binding_focus_overlap_tokens=rb._binding_focus_overlap_tokens,
-        binding_matches_query_focus=rb._binding_matches_query_focus,
-        slot_expected_entities=rb._slot_expected_entities,
+        direct_value_requires_entity_match=_direct_value_requires_entity_match,
+        binding_focus_overlap_tokens=_binding_focus_overlap_tokens,
+        binding_matches_query_focus=_binding_matches_query_focus,
+        slot_expected_entities=_slot_expected_entities,
         slot_entity_match=rb._slot_entity_match,
-        slot_allows_descriptive_fragment=rb._slot_allows_descriptive_fragment,
+        slot_allows_descriptive_fragment=_slot_allows_descriptive_fragment,
         copy_binding_with_text=rb._copy_binding_with_text,
         parse_numeric_text=rb._parse_numeric_text,
         numeric_query_requires_money=intent_mod._numeric_query_requires_money,
@@ -161,16 +173,16 @@ def _schema_grounding_analysis(
         invalid_slots=invalid_slots,
         normalize_text=rb._normalize_text,
         binding_source_text=rb._binding_source_text,
-        binding_quality_score=rb._binding_quality_score,
-        is_generic_fragment=rb._is_generic_fragment,
-        slot_allows_descriptive_fragment=rb._slot_allows_descriptive_fragment,
-        slot_expected_entities=rb._slot_expected_entities,
+        binding_quality_score=_binding_quality_score,
+        is_generic_fragment=_is_generic_fragment,
+        slot_allows_descriptive_fragment=_slot_allows_descriptive_fragment,
+        slot_expected_entities=_slot_expected_entities,
         slot_entity_match=rb._slot_entity_match,
         parse_numeric_text=rb._parse_numeric_text,
         contains_math_expression=rb._contains_math_expression,
-        binding_value_from_session_header=rb._binding_value_from_session_header,
+        binding_value_from_session_header=_binding_value_from_session_header,
         query_expects_time_literal=rb._query_expects_time_literal,
-        event_matches_expected=rb._event_matches_expected,
+        event_matches_expected=_event_matches_expected,
     )
 
 
@@ -187,8 +199,8 @@ def _promote_support_grounding(
         displayed_bindings=displayed_bindings,
         invalid_slots=invalid_slots,
         binding_source_text=rb._binding_source_text,
-        is_generic_fragment=rb._is_generic_fragment,
-        binding_quality_score=rb._binding_quality_score,
+        is_generic_fragment=_is_generic_fragment,
+        binding_quality_score=_binding_quality_score,
     )
 
 
@@ -228,7 +240,7 @@ def _rescue_current_state_where_binding(
         extract_location_from_source=rescue_validation._extract_location_from_source,
         extract_state_entity_from_source=rescue_validation._extract_state_entity_from_source,
         copy_binding_with_text=rb._copy_binding_with_text,
-        is_generic_fragment=rb._is_generic_fragment,
+        is_generic_fragment=_is_generic_fragment,
     )
 
 
@@ -289,7 +301,7 @@ def compile_evidence(
 ) -> dict[str, Any]:
     plan = plan_evidence(row, query_family)
     query_targets = extract_query_targets(row, query_family)
-    score_weights = rb._resolve_compiler_score_weights(context)
+    score_weights = _resolve_compiler_score_weights(context)
     requirements = req.requirements_dict(plan)
     selection_requirements = req.selection_requirements_dict(plan)
     compile_budget_window = build_compiler_budget_window(
@@ -536,38 +548,42 @@ def compile_evidence(
     token_budget_ratio = float(compiled_token_count) / float(budget_base)
     minimality_ratio = max(0.0, 1.0 - min(1.0, token_budget_ratio))
 
-    compiled_units, compiled_texts, compiled_memory_ids, raw_slot_bindings, answer_contract, semantic_analysis = materialization_mod._materialize_compiler_outputs(
-        row=row,
-        plan=plan,
-        query_targets=query_targets,
-        selected_units=selected_units,
-        score_weights=score_weights,
-        memory_labels_by_id=memory_labels_by_id,
-        validate_slot_binding=_validate_slot_binding,
-        infer_missing_slot_invalid_reason=_infer_missing_slot_invalid_reason,
-        promote_support_grounding=_promote_support_grounding,
-        apply_reference_time_fallback=_apply_reference_time_fallback,
-        rescue_current_state_where_binding=_rescue_current_state_where_binding,
-        rescue_information_extraction_where_binding=_rescue_information_extraction_where_binding,
-        rescue_temporal_when_event_binding=_rescue_temporal_when_event_binding,
-        binding_source_text=rb._binding_source_text,
-        extract_numeric_mentions=rb._extract_numeric_mentions,
-        count_numeric_spans_excluding_dates=rb._count_numeric_spans_excluding_dates,
-        schema_grounding_analysis=_schema_grounding_analysis,
-        execute_distinct_count_from_compiled_units=evaluation_mod._execute_distinct_count_from_compiled_units,
-        execute_percentage_aggregate_from_bindings=evaluation_mod._execute_percentage_aggregate_from_bindings,
-        execute_aggregate_from_compiled_units=evaluation_mod._execute_aggregate_from_compiled_units,
-        execute_direct_duration_from_compiled_units=evaluation_mod._execute_direct_duration_from_compiled_units,
-        execute_relative_time=evaluation_mod._execute_relative_time,
-        execute_ordered_choice=evaluation_mod._execute_ordered_choice,
-        execute_comparison=evaluation_mod._execute_comparison,
-        execute_temporal_interval=evaluation_mod._execute_temporal_interval,
-        deterministic_span_allowed=_deterministic_span_allowed,
-        parse_numeric_text=rb._parse_numeric_text,
-        format_numeric_answer=rb._format_numeric_answer,
-        soft_invalid_reasons=rb._SOFT_INVALID_REASONS,
-        query_focus_tokens=rb._query_focus_tokens,
-    )
+    def _rematerialize(units: list[rb.EvidenceUnit]) -> tuple:
+        """Materialize compiler outputs from selected units."""
+        return materialization_mod._materialize_compiler_outputs(
+            row=row,
+            plan=plan,
+            query_targets=query_targets,
+            selected_units=units,
+            score_weights=score_weights,
+            memory_labels_by_id=memory_labels_by_id,
+            validate_slot_binding=_validate_slot_binding,
+            infer_missing_slot_invalid_reason=_infer_missing_slot_invalid_reason,
+            promote_support_grounding=_promote_support_grounding,
+            apply_reference_time_fallback=_apply_reference_time_fallback,
+            rescue_current_state_where_binding=_rescue_current_state_where_binding,
+            rescue_information_extraction_where_binding=_rescue_information_extraction_where_binding,
+            rescue_temporal_when_event_binding=_rescue_temporal_when_event_binding,
+            binding_source_text=rb._binding_source_text,
+            extract_numeric_mentions=rb._extract_numeric_mentions,
+            count_numeric_spans_excluding_dates=rb._count_numeric_spans_excluding_dates,
+            schema_grounding_analysis=_schema_grounding_analysis,
+            execute_distinct_count_from_compiled_units=evaluation_mod._execute_distinct_count_from_compiled_units,
+            execute_percentage_aggregate_from_bindings=evaluation_mod._execute_percentage_aggregate_from_bindings,
+            execute_aggregate_from_compiled_units=evaluation_mod._execute_aggregate_from_compiled_units,
+            execute_direct_duration_from_compiled_units=evaluation_mod._execute_direct_duration_from_compiled_units,
+            execute_relative_time=evaluation_mod._execute_relative_time,
+            execute_ordered_choice=evaluation_mod._execute_ordered_choice,
+            execute_comparison=evaluation_mod._execute_comparison,
+            execute_temporal_interval=evaluation_mod._execute_temporal_interval,
+            deterministic_span_allowed=_deterministic_span_allowed,
+            parse_numeric_text=rb._parse_numeric_text,
+            format_numeric_answer=rb._format_numeric_answer,
+            soft_invalid_reasons=rb._SOFT_INVALID_REASONS,
+            query_focus_tokens=rb._query_focus_tokens,
+        )
+
+    compiled_units, compiled_texts, compiled_memory_ids, raw_slot_bindings, answer_contract, semantic_analysis = _rematerialize(selected_units)
     seed_slot = _single_value_seed_slot(plan)
     if (
         seed_slot is not None
@@ -614,38 +630,7 @@ def compile_evidence(
             )
             compiled_token_count = sum(unit.token_count for unit in selected_units)
             expansion_steps.append(f"validated_rescue_unit={rescue_unit.unit_id}")
-            compiled_units, compiled_texts, compiled_memory_ids, raw_slot_bindings, answer_contract, semantic_analysis = materialization_mod._materialize_compiler_outputs(
-                row=row,
-                plan=plan,
-                query_targets=query_targets,
-                selected_units=selected_units,
-                score_weights=score_weights,
-                memory_labels_by_id=memory_labels_by_id,
-                validate_slot_binding=_validate_slot_binding,
-                infer_missing_slot_invalid_reason=_infer_missing_slot_invalid_reason,
-                promote_support_grounding=_promote_support_grounding,
-                apply_reference_time_fallback=_apply_reference_time_fallback,
-                rescue_current_state_where_binding=_rescue_current_state_where_binding,
-                rescue_information_extraction_where_binding=_rescue_information_extraction_where_binding,
-                rescue_temporal_when_event_binding=_rescue_temporal_when_event_binding,
-                binding_source_text=rb._binding_source_text,
-                extract_numeric_mentions=rb._extract_numeric_mentions,
-                count_numeric_spans_excluding_dates=rb._count_numeric_spans_excluding_dates,
-                schema_grounding_analysis=_schema_grounding_analysis,
-                execute_distinct_count_from_compiled_units=evaluation_mod._execute_distinct_count_from_compiled_units,
-                execute_percentage_aggregate_from_bindings=evaluation_mod._execute_percentage_aggregate_from_bindings,
-                execute_aggregate_from_compiled_units=evaluation_mod._execute_aggregate_from_compiled_units,
-                execute_direct_duration_from_compiled_units=evaluation_mod._execute_direct_duration_from_compiled_units,
-                execute_relative_time=evaluation_mod._execute_relative_time,
-                execute_ordered_choice=evaluation_mod._execute_ordered_choice,
-                execute_comparison=evaluation_mod._execute_comparison,
-                execute_temporal_interval=evaluation_mod._execute_temporal_interval,
-                deterministic_span_allowed=_deterministic_span_allowed,
-                parse_numeric_text=rb._parse_numeric_text,
-                format_numeric_answer=rb._format_numeric_answer,
-                soft_invalid_reasons=rb._SOFT_INVALID_REASONS,
-                query_focus_tokens=rb._query_focus_tokens,
-            )
+            compiled_units, compiled_texts, compiled_memory_ids, raw_slot_bindings, answer_contract, semantic_analysis = _rematerialize(selected_units)
     if not any(isinstance(binding, dict) for binding in dict(answer_contract.get("validated_slot_bindings") or {}).values()):
         preferred_units = _preferred_user_evidence_units(
             row=row,
@@ -672,38 +657,7 @@ def compile_evidence(
             )
             compiled_token_count = sum(unit.token_count for unit in selected_units)
             expansion_steps.append("preferred_user_evidence_rescue=applied")
-            compiled_units, compiled_texts, compiled_memory_ids, raw_slot_bindings, answer_contract, semantic_analysis = materialization_mod._materialize_compiler_outputs(
-                row=row,
-                plan=plan,
-                query_targets=query_targets,
-                selected_units=selected_units,
-                score_weights=score_weights,
-                memory_labels_by_id=memory_labels_by_id,
-                validate_slot_binding=_validate_slot_binding,
-                infer_missing_slot_invalid_reason=_infer_missing_slot_invalid_reason,
-                promote_support_grounding=_promote_support_grounding,
-                apply_reference_time_fallback=_apply_reference_time_fallback,
-                rescue_current_state_where_binding=_rescue_current_state_where_binding,
-                rescue_information_extraction_where_binding=_rescue_information_extraction_where_binding,
-                rescue_temporal_when_event_binding=_rescue_temporal_when_event_binding,
-                binding_source_text=rb._binding_source_text,
-                extract_numeric_mentions=rb._extract_numeric_mentions,
-                count_numeric_spans_excluding_dates=rb._count_numeric_spans_excluding_dates,
-                schema_grounding_analysis=_schema_grounding_analysis,
-                execute_distinct_count_from_compiled_units=evaluation_mod._execute_distinct_count_from_compiled_units,
-                execute_percentage_aggregate_from_bindings=evaluation_mod._execute_percentage_aggregate_from_bindings,
-                execute_aggregate_from_compiled_units=evaluation_mod._execute_aggregate_from_compiled_units,
-                execute_direct_duration_from_compiled_units=evaluation_mod._execute_direct_duration_from_compiled_units,
-                execute_relative_time=evaluation_mod._execute_relative_time,
-                execute_ordered_choice=evaluation_mod._execute_ordered_choice,
-                execute_comparison=evaluation_mod._execute_comparison,
-                execute_temporal_interval=evaluation_mod._execute_temporal_interval,
-                deterministic_span_allowed=_deterministic_span_allowed,
-                parse_numeric_text=rb._parse_numeric_text,
-                format_numeric_answer=rb._format_numeric_answer,
-                soft_invalid_reasons=rb._SOFT_INVALID_REASONS,
-                query_focus_tokens=rb._query_focus_tokens,
-            )
+            compiled_units, compiled_texts, compiled_memory_ids, raw_slot_bindings, answer_contract, semantic_analysis = _rematerialize(selected_units)
     rescue_used = False
     if _should_expand_for_sufficiency(
         row=row,
@@ -736,38 +690,7 @@ def compile_evidence(
             coverage = rescued_coverage
             compiled_token_count = sum(unit.token_count for unit in selected_units)
             expansion_steps.extend(rescue_steps)
-            compiled_units, compiled_texts, compiled_memory_ids, raw_slot_bindings, answer_contract, semantic_analysis = materialization_mod._materialize_compiler_outputs(
-                row=row,
-                plan=plan,
-                query_targets=query_targets,
-                selected_units=selected_units,
-                score_weights=score_weights,
-                memory_labels_by_id=memory_labels_by_id,
-                validate_slot_binding=_validate_slot_binding,
-                infer_missing_slot_invalid_reason=_infer_missing_slot_invalid_reason,
-                promote_support_grounding=_promote_support_grounding,
-                apply_reference_time_fallback=_apply_reference_time_fallback,
-                rescue_current_state_where_binding=_rescue_current_state_where_binding,
-                rescue_information_extraction_where_binding=_rescue_information_extraction_where_binding,
-                rescue_temporal_when_event_binding=_rescue_temporal_when_event_binding,
-                binding_source_text=rb._binding_source_text,
-                extract_numeric_mentions=rb._extract_numeric_mentions,
-                count_numeric_spans_excluding_dates=rb._count_numeric_spans_excluding_dates,
-                schema_grounding_analysis=_schema_grounding_analysis,
-                execute_distinct_count_from_compiled_units=evaluation_mod._execute_distinct_count_from_compiled_units,
-                execute_percentage_aggregate_from_bindings=evaluation_mod._execute_percentage_aggregate_from_bindings,
-                execute_aggregate_from_compiled_units=evaluation_mod._execute_aggregate_from_compiled_units,
-                execute_direct_duration_from_compiled_units=evaluation_mod._execute_direct_duration_from_compiled_units,
-                execute_relative_time=evaluation_mod._execute_relative_time,
-                execute_ordered_choice=evaluation_mod._execute_ordered_choice,
-                execute_comparison=evaluation_mod._execute_comparison,
-                execute_temporal_interval=evaluation_mod._execute_temporal_interval,
-                deterministic_span_allowed=_deterministic_span_allowed,
-                parse_numeric_text=rb._parse_numeric_text,
-                format_numeric_answer=rb._format_numeric_answer,
-                soft_invalid_reasons=rb._SOFT_INVALID_REASONS,
-                query_focus_tokens=rb._query_focus_tokens,
-            )
+            compiled_units, compiled_texts, compiled_memory_ids, raw_slot_bindings, answer_contract, semantic_analysis = _rematerialize(selected_units)
             rescue_used = True
     pre_downgrade_answer_mode = str(answer_contract.get("answer_mode") or "")
     pre_downgrade_answerability = str(answer_contract.get("answerability_level") or "")

@@ -3,8 +3,11 @@
 from __future__ import annotations
 
 from dataclasses import replace
+import logging
 import re
 from typing import Any, Callable
+
+_log = logging.getLogger(__name__)
 
 from evidence.schema import EvidencePlan
 from . import requirements as req
@@ -776,7 +779,7 @@ def build_answer_contract(
                         # MiniLM disagrees with compiler — prefer MiniLM span
                         answer_text = span_result.answer
         except Exception:
-            pass  # If MiniLM unavailable, fall through to original answer
+            _log.debug("MiniLM span verification unavailable", exc_info=True)
 
     if answer_mode == "reader_from_slots" and answerability_level == "deterministic_safe":
         answerability_level = "reader_only"
@@ -825,68 +828,3 @@ def build_answer_contract(
     }
 
 
-def validated_slot_contract(
-    *,
-    row: dict[str, Any],
-    plan: EvidencePlan,
-    query_targets: Any,
-    compiled_units: list[dict[str, Any]],
-    raw_slot_bindings: dict[str, dict[str, Any] | None],
-    slot_bindings_with_display_text: Callable[..., dict[str, dict[str, Any] | None]],
-    query_focus_tokens: Callable[[dict[str, Any]], set[str]],
-    validate_slot_binding: Callable[..., tuple[dict[str, Any] | None, str | None]],
-    infer_missing_slot_invalid_reason: Callable[..., str | None],
-    promote_support_grounding: Callable[..., None],
-    apply_reference_time_fallback: Callable[..., None],
-    rescue_current_state_where_binding: Callable[..., None],
-    rescue_information_extraction_where_binding: Callable[..., None],
-    rescue_temporal_when_event_binding: Callable[..., None],
-    binding_source_text: Callable[[dict[str, Any]], str],
-    extract_numeric_mentions: Callable[[str], list[tuple[float, str, str, str]]],
-    count_numeric_spans_excluding_dates: Callable[[str], int],
-    schema_grounding_analysis: Callable[..., dict[str, Any]],
-    execute_distinct_count_from_compiled_units: Callable[..., tuple[str | None, list[str]]],
-    execute_percentage_aggregate_from_bindings: Callable[..., tuple[str | None, list[str]]],
-    execute_aggregate_from_compiled_units: Callable[..., tuple[str | None, list[str]]],
-    execute_direct_duration_from_compiled_units: Callable[..., tuple[str | None, list[str]]],
-    execute_relative_time: Callable[..., tuple[str | None, list[str]]],
-    execute_ordered_choice: Callable[..., tuple[str | None, list[str]]],
-    execute_comparison: Callable[..., tuple[str | None, list[str]]],
-    execute_temporal_interval: Callable[..., tuple[str | None, list[str]]],
-    deterministic_span_allowed: Callable[..., bool],
-    parse_numeric_text: Callable[[str], tuple[float, str, str] | None],
-    format_numeric_answer: Callable[[float, str, str], str],
-    soft_invalid_reasons: set[str],
-) -> dict[str, Any]:
-    return build_answer_contract(
-        row=row,
-        plan=plan,
-        query_targets=query_targets,
-        compiled_units=compiled_units,
-        raw_slot_bindings=raw_slot_bindings,
-        slot_bindings_with_display_text=slot_bindings_with_display_text,
-        query_focus_tokens=query_focus_tokens,
-        validate_slot_binding=validate_slot_binding,
-        infer_missing_slot_invalid_reason=infer_missing_slot_invalid_reason,
-        promote_support_grounding=promote_support_grounding,
-        apply_reference_time_fallback=apply_reference_time_fallback,
-        rescue_current_state_where_binding=rescue_current_state_where_binding,
-        rescue_information_extraction_where_binding=rescue_information_extraction_where_binding,
-        rescue_temporal_when_event_binding=rescue_temporal_when_event_binding,
-        binding_source_text=binding_source_text,
-        extract_numeric_mentions=extract_numeric_mentions,
-        count_numeric_spans_excluding_dates=count_numeric_spans_excluding_dates,
-        schema_grounding_analysis=schema_grounding_analysis,
-        execute_distinct_count_from_compiled_units=execute_distinct_count_from_compiled_units,
-        execute_percentage_aggregate_from_bindings=execute_percentage_aggregate_from_bindings,
-        execute_aggregate_from_compiled_units=execute_aggregate_from_compiled_units,
-        execute_direct_duration_from_compiled_units=execute_direct_duration_from_compiled_units,
-        execute_relative_time=execute_relative_time,
-        execute_ordered_choice=execute_ordered_choice,
-        execute_comparison=execute_comparison,
-        execute_temporal_interval=execute_temporal_interval,
-        deterministic_span_allowed=deterministic_span_allowed,
-        parse_numeric_text=parse_numeric_text,
-        format_numeric_answer=format_numeric_answer,
-        soft_invalid_reasons=soft_invalid_reasons,
-    )

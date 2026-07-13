@@ -6,13 +6,12 @@ from dataclasses import replace
 from typing import Any
 
 from ..runtime import bindings as rb
+from ..runtime.semantic import _query_needs_personal_semantic_gate, _unit_semantic_support
+from ..validation.compatibility import _binding_quality_score
 from . import requirements as req
+from .deterministic import _plan_metadata_text
 
 _GENERIC_COUNT_OBJECT_TOKENS = {"different", "distinct", "type", "types", "kind", "kinds", "item", "items"}
-
-
-def _plan_metadata_text(plan: rb.EvidencePlan, key: str) -> str:
-    return str(getattr(plan, "plan_metadata", {}).get(key) or "").strip().lower()
 
 
 def _reader_first_schema(plan: rb.EvidencePlan) -> bool:
@@ -108,7 +107,7 @@ def _validated_single_value_seed_unit(
         return None
 
     focus_tokens = rb._query_focus_tokens(row)
-    needs_personal_gate = rb._query_needs_personal_semantic_gate(
+    needs_personal_gate = _query_needs_personal_semantic_gate(
         row=row,
         plan=plan,
         query_targets=query_targets,
@@ -117,7 +116,7 @@ def _validated_single_value_seed_unit(
     best_unit: rb.EvidenceUnit | None = None
 
     for unit in available_units:
-        semantic_support = rb._unit_semantic_support(
+        semantic_support = _unit_semantic_support(
             row=row,
             query_family=plan.query_family,
             unit=unit,
@@ -179,7 +178,7 @@ def _validated_single_value_seed_unit(
             1 if is_current_state else 0,
             0 if is_question else 1,
             1 if "answer_bearing" in labels else 0,
-            rb._binding_quality_score(validated_binding),
+            _binding_quality_score(validated_binding),
             # Recency/State tiebreaker: for direct lookups and state queries,
             # prefer the latest state assertion when semantic support is comparable.
             1 if is_state else 0,

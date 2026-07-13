@@ -4,14 +4,14 @@ from __future__ import annotations
 
 from typing import Any, Callable
 
+from evidence.schema import EvidencePlan
+from evidence.units import EvidenceUnit
 from ..runtime.bindings import (
-    EvidencePlan,
-    EvidenceUnit,
-    _semantic_sufficiency_analysis,
     _slot_bindings,
     _slot_bindings_with_display_text,
     _unit_payload,
 )
+from ..runtime.semantic import _semantic_sufficiency_analysis
 from .deterministic import build_answer_contract
 
 

@@ -6,19 +6,18 @@ from typing import Any
 
 from .adaptive_budget import BudgetWindow
 from ..runtime.text import _build_compiled_unit_analysis
+from shared.nlp import CandidateView
+from evidence.schema import EvidencePlan
+from evidence.units import EvidenceUnit
+from retrieval.query_targets import QueryTargets
 from ..runtime.bindings import (
-    CandidateView,
-    EvidencePlan,
-    EvidenceUnit,
-    QueryTargets,
-    _best_matching_entity,
-    _query_focus_tokens,
     _same_memory_pair_sufficient,
-    _unit_has_strong_focus_alignment,
     _selected_unit_roles,
-    _WEAK_QUERY_FOCUS_TOKENS,
     score_evidence_unit,
 )
+from ..runtime.focus import _WEAK_QUERY_FOCUS_TOKENS, _query_focus_tokens
+from ..runtime.semantic import _unit_has_strong_focus_alignment
+from ..validation.compatibility import _best_matching_entity
 from . import requirements as req
 from .requirements import is_aggregate_schema, is_count_aggregate_schema, is_numeric_aggregate_schema
 from evidence.units import build_evidence_units_for_views

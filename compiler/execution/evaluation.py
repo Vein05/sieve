@@ -7,36 +7,40 @@ from collections.abc import Mapping
 import re
 from typing import Any
 
-from ..runtime.bindings import (
-    EvidencePlan,
-    QueryTargets,
-    _QUESTION_UNIT_RE,
+from shared.nlp import cached_build_profile
+from evidence.schema import EvidencePlan
+from retrieval.query_targets import QueryTargets
+from ..runtime.bindings import _QUESTION_UNIT_RE
+from ..runtime.focus import (
     _WEAK_QUERY_FOCUS_TOKENS,
-    _best_matching_entity,
-    _binding_quality_score,
-    _binding_source_text,
     _count_lookup_object_tokens,
     _count_lookup_predicate_tokens,
-    _count_numeric_spans_excluding_dates,
-    _event_matches_expected,
-    _format_numeric_answer,
-    _normalize_text,
-    _parse_numeric_text,
     _predicate_focus_tokens,
     _query_focus_tokens,
-    _requested_duration_unit,
     _stem_token,
-    _time_unit_from_query,
     _token_stems,
-    cached_build_profile,
+)
+from ..runtime.numeric import (
+    _count_numeric_spans_excluding_dates,
+    _format_numeric_answer,
+    _parse_numeric_text,
+)
+from ..runtime.text import (
+    _binding_source_text,
+    _compiled_unit_body_text,
+    _compiled_unit_numeric_mentions,
+    _normalize_text,
+    _query_has_relative_reference_clause,
+    _requested_duration_unit,
+    _time_unit_from_query,
+)
+from ..validation.compatibility import (
+    _best_matching_entity,
+    _binding_quality_score,
+    _event_matches_expected,
 )
 from ..runtime.temporal import _binding_anchor_date, _extract_event_date
 from ..runtime.parsing import _NUMBER_WORD_TO_INT
-from ..runtime.text import (
-    _compiled_unit_body_text,
-    _compiled_unit_numeric_mentions,
-    _query_has_relative_reference_clause,
-)
 from .extractors.intent import (
     _is_count_lookup_query,
     _is_count_query,
@@ -50,7 +54,7 @@ from .extractors.intent import (
     _requested_distance_unit,
 )
 
-_DURATION_UNITS = {"day", "days", "week", "weeks", "month", "months", "year", "years", "hour", "hours", "minute", "minutes"}
+_DURATION_UNITS = frozenset({"day", "days", "week", "weeks", "month", "months", "year", "years", "hour", "hours", "minute", "minutes"})
 _EXTREMUM_GENERIC_TOKENS = {
     "account",
     "age",
@@ -341,7 +345,6 @@ def _sum_numeric_mentions_for_query(compiled_units: list[dict[str, Any]], row: d
     requires_money = _numeric_query_requires_money(row)
     requires_distance = _numeric_query_requires_distance(row)
     focus_tokens = _query_focus_tokens(row)
-    duration_units = {"day", "days", "week", "weeks", "month", "months", "year", "years", "hour", "hours", "minute", "minutes"}
     total = 0.0
     prefix = "$" if requires_money else ""
     suffix = ""
@@ -388,7 +391,7 @@ def _sum_numeric_mentions_for_query(compiled_units: list[dict[str, Any]], row: d
                     or f"{normalized_unit}s" in focus_tokens
                 ):
                     unit_score = 3
-                elif normalized_unit in duration_units:
+                elif normalized_unit in _DURATION_UNITS:
                     unit_score = 0
                 generic_mentions.append((unit_score, number, normalized_unit, unit_id))
                 seen_mentions.add(mention_key)
@@ -527,54 +530,60 @@ def _execute_count_lookup_from_compiled_units(*, row: dict[str, Any], compiled_u
     return cleaned, [best_unit_id] if best_unit_id else []
 
 
+def _aggregate_count_events(*, row: dict[str, Any], compiled_units: list[dict[str, Any]], **_kw: Any) -> tuple[str | None, list[str]]:
+    """Handle CountEvents schema: try count lookup, then typed item count."""
+    answer, supporting = _execute_count_lookup_from_compiled_units(row=row, compiled_units=compiled_units)
+    if answer:
+        return answer, supporting
+    count, supporting = _count_typed_items(compiled_units, row)
+    if count >= 1:
+        return str(count), supporting
+    return None, []
+
+
+def _aggregate_count_distinct(*, compiled_units: list[dict[str, Any]], row: dict[str, Any], **_kw: Any) -> tuple[str | None, list[str]]:
+    """Handle CountDistinctItems schema."""
+    count, supporting = _count_distinct_item_signatures(compiled_units, row)
+    if count >= 2:
+        return str(count), supporting
+    return None, []
+
+
+_AGGREGATE_SCHEMA_DISPATCH: dict[str, Any] = {
+    "CountLookup": lambda *, row, compiled_units, **_kw: _execute_count_lookup_from_compiled_units(row=row, compiled_units=compiled_units),
+    "CountEvents": _aggregate_count_events,
+    "CountDistinctItems": _aggregate_count_distinct,
+    "SumOperands": lambda *, row, compiled_units, **_kw: _sum_numeric_mentions_for_query(compiled_units, row),
+    "AverageAggregate": lambda *, row, compiled_units, **_kw: _execute_average_aggregate_from_compiled_units(row=row, compiled_units=compiled_units),
+    "DeltaAggregate": lambda *, row, compiled_units, **_kw: _execute_delta_aggregate_from_compiled_units(row=row, compiled_units=compiled_units),
+}
+
+
 def _execute_aggregate_from_compiled_units(*, row: dict[str, Any], plan: EvidencePlan, compiled_units: list[dict[str, Any]]) -> tuple[str | None, list[str]]:
     if not compiled_units:
         return None, []
     schema_name = str(plan.schema_name or "")
+    # PercentageAggregate: try first, fall through if not percentage schema
     if schema_name == "PercentageAggregate" or _is_percentage_query(row):
         answer, supporting = _execute_percentage_aggregate_from_compiled_units(row=row, compiled_units=compiled_units)
         if answer:
             return answer, supporting
         if schema_name == "PercentageAggregate":
             return None, []
-    if schema_name == "CountLookup":
-        answer, supporting = _execute_count_lookup_from_compiled_units(row=row, compiled_units=compiled_units)
-        if answer:
-            return answer, supporting
-        return None, []
-    if schema_name == "CountEvents":
-        answer, supporting = _execute_count_lookup_from_compiled_units(row=row, compiled_units=compiled_units)
-        if answer:
-            return answer, supporting
-        count, supporting = _count_typed_items(compiled_units, row)
-        if count >= 1:
-            return str(count), supporting
-        return None, []
-    if schema_name == "CountDistinctItems":
-        count, supporting = _count_distinct_item_signatures(compiled_units, row)
-        if count >= 2:
-            return str(count), supporting
-        return None, []
-    if schema_name == "SumOperands":
-        answer, supporting = _sum_numeric_mentions_for_query(compiled_units, row)
-        if answer:
-            return answer, supporting
-        return None, []
-    if schema_name == "AverageAggregate":
-        answer, supporting = _execute_average_aggregate_from_compiled_units(row=row, compiled_units=compiled_units)
-        if answer:
-            return answer, supporting
-        return None, []
-    if schema_name == "DeltaAggregate":
-        answer, supporting = _execute_delta_aggregate_from_compiled_units(row=row, compiled_units=compiled_units)
-        if answer:
-            return answer, supporting
-        return None, []
+    # ExtremumSelection: special case needing plan arg
     if schema_name == "ExtremumSelection":
         answer, supporting = _execute_extremum_selection_from_compiled_units(row=row, plan=plan, compiled_units=compiled_units)
         if answer:
             return answer, supporting
         return None, []
+    # Dispatch-dict schemas
+    handler = _AGGREGATE_SCHEMA_DISPATCH.get(schema_name)
+    if handler is not None:
+        answer, supporting = handler(row=row, compiled_units=compiled_units)
+        if answer:
+            return answer, supporting
+        return None, []
+    # Query-type fallbacks (no schema match)
     if _is_count_lookup_query(row):
         answer, supporting = _execute_count_lookup_from_compiled_units(row=row, compiled_units=compiled_units)
         if answer:
@@ -899,6 +908,28 @@ def _execute_direct_duration_from_compiled_units(*, row: dict[str, Any], compile
     return None, []
 
 
+def _calendar_delta(date_a: date, date_b: date, unit: str) -> tuple[float, bool] | None:
+    """Return (value, discrete) for calendar-aware delta, or None if unsupported."""
+    delta_days = abs((date_b - date_a).days)
+    if unit == "week":
+        return delta_days / 7.0, True
+    if unit == "month":
+        earlier, later = (date_a, date_b) if date_a <= date_b else (date_b, date_a)
+        whole = (later.year - earlier.year) * 12 + (later.month - earlier.month)
+        if later.day < earlier.day:
+            whole -= 1
+        return (float(whole) if whole > 0 else delta_days / 30.0), True
+    if unit == "year":
+        earlier, later = (date_a, date_b) if date_a <= date_b else (date_b, date_a)
+        whole = later.year - earlier.year
+        if (later.month, later.day) < (earlier.month, earlier.day):
+            whole -= 1
+        return (float(whole) if whole > 0 else delta_days / 365.0), True
+    if unit in {"hour", "minute"}:
+        return None
+    return float(delta_days), False
+
+
 def _execute_relative_time(*, row: dict[str, Any], validated_bindings: dict[str, dict[str, Any] | None], displayed_bindings: dict[str, dict[str, Any] | None]) -> tuple[str | None, list[str]]:
     event_binding = validated_bindings.get("event") or displayed_bindings.get("event")
     if not isinstance(event_binding, dict):
@@ -931,31 +962,11 @@ def _execute_relative_time(*, row: dict[str, Any], validated_bindings: dict[str,
                 supporting.append(unit_id)
     if reference_date is None:
         return None, []
-    delta_days = abs((reference_date - event_date).days)
     unit = _time_unit_from_query(row)
-    value = float(delta_days)
-    discrete_unit = False
-    if unit == "week":
-        value = value / 7.0
-        discrete_unit = True
-    elif unit == "month":
-        # Calendar-accurate month difference
-        earlier, later = (event_date, reference_date) if event_date <= reference_date else (reference_date, event_date)
-        whole = (later.year - earlier.year) * 12 + (later.month - earlier.month)
-        if later.day < earlier.day:
-            whole -= 1
-        value = float(whole) if whole > 0 else delta_days / 30.0
-        discrete_unit = True
-    elif unit == "year":
-        # Calendar-accurate year difference
-        earlier, later = (event_date, reference_date) if event_date <= reference_date else (reference_date, event_date)
-        whole = later.year - earlier.year
-        if (later.month, later.day) < (earlier.month, earlier.day):
-            whole -= 1
-        value = float(whole) if whole > 0 else delta_days / 365.0
-        discrete_unit = True
-    elif unit in {"hour", "minute"}:
+    result = _calendar_delta(event_date, reference_date, unit)
+    if result is None:
         return None, []
+    value, discrete_unit = result
     value_text = str(int(round(value))) if discrete_unit else (str(int(value)) if value.is_integer() else f"{value:.1f}".rstrip("0").rstrip("."))
     suffix = unit if value_text == "1" else f"{unit}s"
     return f"{value_text} {suffix}", supporting
@@ -1040,25 +1051,11 @@ def _execute_temporal_interval(*, row: dict[str, Any], validated_bindings: dict[
     right_date = _extract_event_date(_binding_source_text(right), _binding_anchor_date(right))
     if left_date is None or right_date is None:
         return None, []
-    delta_days = abs((right_date - left_date).days)
     unit = _time_unit_from_query(row)
-    value = float(delta_days)
-    if unit == "week":
-        value = value / 7.0
-    elif unit == "month":
-        earlier, later = (left_date, right_date) if left_date <= right_date else (right_date, left_date)
-        whole = (later.year - earlier.year) * 12 + (later.month - earlier.month)
-        if later.day < earlier.day:
-            whole -= 1
-        value = float(whole) if whole > 0 else delta_days / 30.0
-    elif unit == "year":
-        earlier, later = (left_date, right_date) if left_date <= right_date else (right_date, left_date)
-        whole = later.year - earlier.year
-        if (later.month, later.day) < (earlier.month, earlier.day):
-            whole -= 1
-        value = float(whole) if whole > 0 else delta_days / 365.0
-    elif unit in {"hour", "minute"}:
+    result = _calendar_delta(left_date, right_date, unit)
+    if result is None:
         return None, []
+    value, _ = result
     value_text = str(int(value)) if value.is_integer() else f"{value:.1f}".rstrip("0").rstrip(".")
     suffix = unit if value_text == "1" else f"{unit}s"
     return f"{value_text} {suffix}", [str(left.get("unit_id") or ""), str(right.get("unit_id") or "")]

@@ -4,7 +4,9 @@ from __future__ import annotations
 
 from typing import Any
 
-from ..runtime.bindings import EvidencePlan, EvidenceUnit, _unit_requirement_tags_cached
+from evidence.schema import EvidencePlan
+from evidence.units import EvidenceUnit
+from ..runtime.bindings import _unit_requirement_tags_cached
 from .requirements import coverage_dict as _coverage_dict
 
 

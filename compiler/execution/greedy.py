@@ -5,15 +5,15 @@ from __future__ import annotations
 from typing import Any
 
 from .adaptive_budget import BudgetWindow
+from evidence.schema import EvidencePlan
+from evidence.units import EvidenceUnit
 from ..runtime.bindings import (
-    EvidencePlan,
-    EvidenceUnit,
     _effective_missing_roles,
-    _missing_role_gain,
     _unit_requirement_tags_cached,
-    _unit_semantic_gate_allows_anchor,
     score_evidence_unit,
 )
+from ..runtime.roles import _missing_role_gain
+from ..runtime.semantic import _unit_semantic_gate_allows_anchor
 from .requirements import (
     coverage_dict as _coverage_dict,
     missing_requirements as _missing_requirements,
