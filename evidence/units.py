@@ -11,6 +11,11 @@ from controller.logic import token_count
 from controller.text_utils import normalize_text
 
 from shared.nlp import CandidateView, cached_build_profile, cached_sent_tokenize, cached_word_tokenize, cached_pos_tag
+from shared.constants import (
+    COMPARISON_LANGUAGE_MARKERS as _COMPARISON_LANGUAGE_MARKERS,
+    CURRENT_STATE_LANGUAGE_MARKERS as _CURRENT_STATE_LANGUAGE_MARKERS,
+    REFERENCE_LANGUAGE_MARKERS as _REFERENCE_LANGUAGE_MARKERS,
+)
 from retrieval.memory_builder import (
     build_memory_objects,
     build_memory_objects_for_views,
@@ -31,47 +36,7 @@ _VALUE_TAIL_RE = re.compile(
     r"lower than|bigger than|smaller than)\s+(?P<tail>[^.!?;|]+)"
 )
 
-_COMPARISON_LANGUAGE_MARKERS = (
-    " compared against ",
-    " compared to ",
-    " compared with ",
-    " difference between ",
-    " difference in ",
-    " higher than ",
-    " less than ",
-    " lower than ",
-    " more than ",
-    " vs ",
-    " versus ",
-)
-
-_CURRENT_STATE_LANGUAGE_MARKERS = (
-    " as of now ",
-    " current ",
-    " current state ",
-    " current status ",
-    " currently ",
-    " now ",
-    " right now ",
-    " still ",
-    " switched ",
-    " switched to ",
-    " changed to ",
-)
-
-_REFERENCE_LANGUAGE_MARKERS = (
-    " as of ",
-    " ago ",
-    " before ",
-    " after ",
-    " last time ",
-    " previous ",
-    " reference ",
-    " since ",
-    " then ",
-)
-
-_SUBJECT_SKIP_TOKENS = {
+_SUBJECT_SKIP_TOKENS = frozenset({
     "a",
     "an",
     "and",
@@ -85,7 +50,7 @@ _SUBJECT_SKIP_TOKENS = {
     "the",
     "to",
     "with",
-}
+})
 
 _NUMBER_WORD_VALUES = {
     "zero": "0",
@@ -103,7 +68,7 @@ _NUMBER_WORD_VALUES = {
     "twelve": "12",
 }
 
-_QUESTION_PREFIXES = {
+_QUESTION_PREFIXES = frozenset({
     "can",
     "could",
     "did",
@@ -119,8 +84,8 @@ _QUESTION_PREFIXES = {
     "who",
     "why",
     "would",
-}
-_REQUEST_MARKERS = {
+})
+_REQUEST_MARKERS = frozenset({
     "advice",
     "help",
     "ideas",
@@ -130,8 +95,8 @@ _REQUEST_MARKERS = {
     "suggestion",
     "suggestions",
     "tips",
-}
-_COUNT_STATEMENT_PREDICATES = {
+})
+_COUNT_STATEMENT_PREDICATES = frozenset({
     "bought",
     "collected",
     "completed",
@@ -148,8 +113,8 @@ _COUNT_STATEMENT_PREDICATES = {
     "use",
     "used",
     "watched",
-}
-_ADVICE_MARKERS = {
+})
+_ADVICE_MARKERS = frozenset({
     "recommend",
     "recommended",
     "should",
@@ -157,8 +122,8 @@ _ADVICE_MARKERS = {
     "suggested",
     "tips",
     "try",
-}
-_INSTRUCTION_MARKERS = {
+})
+_INSTRUCTION_MARKERS = frozenset({
     "add",
     "bake",
     "beat",
@@ -173,9 +138,9 @@ _INSTRUCTION_MARKERS = {
     "saute",
     "use",
     "whisk",
-}
-_FIRST_PERSON_TOKENS = {"i", "i'd", "i'll", "i'm", "i've", "im", "ive", "me", "my", "we", "our", "us"}
-_PROGRESS_MARKERS = {
+})
+_FIRST_PERSON_TOKENS = frozenset({"i", "i'd", "i'll", "i'm", "i've", "im", "ive", "me", "my", "we", "our", "us"})
+_PROGRESS_MARKERS = frozenset({
     "completed",
     "episodes",
     "finished",
@@ -185,8 +150,8 @@ _PROGRESS_MARKERS = {
     "so",
     "videos",
     "watched",
-}
-_ACQUISITION_MARKERS = {
+})
+_ACQUISITION_MARKERS = frozenset({
     "acquire",
     "acquired",
     "bought",
@@ -196,8 +161,8 @@ _ACQUISITION_MARKERS = {
     "picked",
     "picked up",
     "purchased",
-}
-_COMPLETION_MARKERS = {
+})
+_COMPLETION_MARKERS = frozenset({
     "completed",
     "done",
     "finished",
@@ -207,7 +172,7 @@ _COMPLETION_MARKERS = {
     "tried",
     "visited",
     "watched",
-}
+})
 
 
 @dataclass(frozen=True)

@@ -7,6 +7,8 @@ from datetime import date
 import re
 from typing import Any
 
+from shared.constants import QUERY_STOP_WORDS
+
 
 def _parse_date_flexible(text: str) -> date | None:
     """Parse a date string accepting both YYYY/MM/DD and YYYY/M/D formats."""
@@ -47,13 +49,13 @@ _GENERIC_ASSISTANT_RE_RENDER = re.compile(
     re.IGNORECASE,
 )
 
-_AGGREGATE_SCHEMA_NAMES_RENDER = {
+_AGGREGATE_SCHEMA_NAMES_RENDER = frozenset({
     "CountLookup", "CountDistinctItems", "CountEvents",
     "SumOperands", "AverageAggregate", "DeltaAggregate",
     "ExtremumSelection", "PercentageAggregate", "Comparison",
     "Aggregate",
-}
-_COUNT_SCHEMA_NAMES_RENDER = {"CountLookup", "CountDistinctItems", "CountEvents"}
+})
+_COUNT_SCHEMA_NAMES_RENDER = frozenset({"CountLookup", "CountDistinctItems", "CountEvents"})
 
 
 def _is_user_first_person(text: str) -> bool:
@@ -88,15 +90,15 @@ def _dedupe_evidence_lines(compiled_units: list[dict[str, Any]]) -> list[dict[st
         )
     return evidence_lines
 
-_NUMERIC_SLOT_NAMES = {
+_NUMERIC_SLOT_NAMES = frozenset({
     "numeric_value",
     "operand_1",
     "operand_2",
     "left_operand",
     "right_operand",
-}
-_TIME_SLOT_NAMES = {"time_a", "time_b", "reference_time"}
-_TEMPORAL_DIRECT_SLOT_NAMES = {"event"}
+})
+_TIME_SLOT_NAMES = frozenset({"time_a", "time_b", "reference_time"})
+_TEMPORAL_DIRECT_SLOT_NAMES = frozenset({"event"})
 _QUOTED_VALUE_RE = re.compile(r'["“](?P<value>[^"\n]{1,80})["”]')
 _CALLED_VALUE_RE = re.compile(r"\b(?:called|named)\s+(?P<value>[A-Z0-9][^,.!?;]{1,80})", re.IGNORECASE)
 _CALENDAR_VALUE_RE = re.compile(
@@ -172,7 +174,7 @@ _PERSONAL_BEST_RE = re.compile(
     re.IGNORECASE,
 )
 
-_LEADING_VALUE_WORDS = {"a", "an", "the"}
+_LEADING_VALUE_WORDS = frozenset({"a", "an", "the"})
 _PREFIX_RE = re.compile(r"^\s*\d{4}/\d{2}/\d{2}(?:\s+session)?\s*(?:\|\s*)?", re.IGNORECASE)
 _SESSION_HEADER_RE = re.compile(
     r"^\s*(?P<header>\d{4}/\d{2}/\d{2}\s+\([A-Za-z]{3}\)\s+\d{1,2}:\d{2}\s+session\s+\S+\s*\|?\s*(?:user|assistant|system)\s*:)\s*(?P<body>.*)$",
@@ -911,14 +913,7 @@ def render_multi_session_fact_list(
     query = str(row.get("query") or row.get("question") or "").strip().lower()
 
     # --- Extract query entity words for relevance filtering ---
-    _stop = {
-        "how", "many", "much", "did", "do", "does", "i", "the", "in", "a",
-        "of", "my", "have", "has", "to", "and", "or", "total", "currently",
-        "what", "which", "where", "when", "who", "been", "was", "were", "is",
-        "are", "for", "on", "at", "with", "from", "by", "an", "all", "any",
-        "past", "few", "last", "first", "new", "different", "types", "number",
-        "spend", "spent", "me", "we", "our", "that", "this", "it", "them",
-    }
+    _stop = QUERY_STOP_WORDS
     query_words = {w for w in query.split() if w not in _stop and len(w) > 2}
     if query_targets is not None:
         for ent in getattr(query_targets, "candidate_entities", ()) or ():
@@ -1348,7 +1343,7 @@ def render_evidence_package(
 
         # 2. For count schemas, enumerate distinct user-authored items as operands
         #    so the reader sees an explicit list to count.
-        _stop = {"how","many","much","did","do","i","the","in","a","of","my","have","has","to","and","or","total","currently","what","which","where","when","who","been","was","were","is","are","for","on","at","with","from","by","an","all","any","past","few","last","first","new","different","types","number","spend","spent"}
+        _stop = QUERY_STOP_WORDS
         _qt_words: set[str] = set()
         for ent in (getattr(query_targets, "candidate_entities", ()) or ()) if query_targets is not None else ():
             for w in str(ent).lower().split():

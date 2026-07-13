@@ -11,10 +11,18 @@ from controller.constants import DATE_RE, NEGATION_PATTERNS, TEMPORAL_HINTS, TIM
 
 from shared.nlp import (
     CandidateView,
+    _get_nlp,
     canonical_attribute,
     cached_sent_tokenize,
     cached_word_tokenize,
     cached_pos_tag,
+)
+from shared.constants import (
+    COMPARISON_OBJECT_MARKERS as _COMPARISON_MARKERS,
+    PREFERENCE_MARKERS as _PREFERENCE_MARKERS,
+    STATE_OBJECT_MARKERS as _STATE_MARKERS,
+    UPDATE_OBJECT_MARKERS as _UPDATE_MARKERS,
+    TEMPORAL_ADVERBS as _TEMPORAL_ADVERBS,
 )
 from evidence.memory_objects import MemoryObject, ProvenanceRecord
 
@@ -127,50 +135,8 @@ _ENTITY_KEY_RE = re.compile(r"\b(?:my|the|our)\s+([a-z][a-z0-9_-]{2,})\b")
 _ATTRIBUTE_KEY_RE = re.compile(r"\b(color|status|brand|breed|price|cost|date|time|version|size|name|model|route|plan|role)\b")
 _EVENT_KEY_RE = re.compile(r"\b(met|moved|arrived|left|joined|attended|bought|sold|started|finished|visited|traveled|travelled|called|emailed|booked|scheduled|replaced|participated)\b")
 
-_COMPARISON_MARKERS = (
-    " compared ",
-    " versus ",
-    " vs ",
-    " more than ",
-    " less than ",
-    " higher than ",
-    " lower than ",
-)
-
-_PREFERENCE_MARKERS = (
-    " prefer ",
-    " preference ",
-    " favorite ",
-    " favourite ",
-    " like ",
-    " love ",
-    " dislike ",
-    " hate ",
-)
-
-_STATE_MARKERS = (
-    " is ",
-    " are ",
-    " was ",
-    " were ",
-    " currently ",
-    " current ",
-    " now ",
-    " still ",
-)
-
-_UPDATE_MARKERS = (
-    " switched ",
-    " changed ",
-    " update ",
-    " updated ",
-    " instead of ",
-    " no longer ",
-    " used to ",
-)
-
 _ID_SANITIZE_RE = re.compile(r"[^a-z0-9]+")
-_EVENT_SIGNATURE_SKIP = {
+_EVENT_SIGNATURE_SKIP = frozenset({
     "a",
     "an",
     "and",
@@ -188,13 +154,13 @@ _EVENT_SIGNATURE_SKIP = {
     "the",
     "to",
     "user",
-}
+})
 _VERB_OBJECT_RE = re.compile(
     r"\b(?:met|moved|arrived|left|joined|attended|bought|sold|started|finished|visited|"
     r"traveled|travelled|called|emailed|booked|scheduled|replaced|participated)\b"
     r"(?:\s+(?:to|with|at|for|in|on))?\s+(?:an?|the|my|our)?\s*([a-z][a-z0-9_-]{2,})\b"
 )
-_ENTITY_STOP_TOKENS = {
+_ENTITY_STOP_TOKENS = frozenset({
     "a",
     "after",
     "am",
@@ -230,8 +196,8 @@ _ENTITY_STOP_TOKENS = {
     "were",
     "while",
     "with",
-}
-_ENTITY_VERB_STOPS = {
+})
+_ENTITY_VERB_STOPS = frozenset({
     "am",
     "are",
     "arrived",
@@ -275,7 +241,7 @@ _ENTITY_VERB_STOPS = {
     "was",
     "went",
     "were",
-}
+})
 _LOCATION_CUE_RE = re.compile(r"\bwhere\b", re.IGNORECASE)
 _VALUE_CLEAN_RE = re.compile(r"\s+")
 _LOCATION_VALUE_PATTERNS = (
@@ -305,7 +271,7 @@ _LOCATION_VALUE_PATTERNS = (
         re.IGNORECASE,
     ),
 )
-_LOCATION_HEAD_TOKENS = {
+_LOCATION_HEAD_TOKENS = frozenset({
     "bed",
     "bedroom",
     "campus",
@@ -334,8 +300,8 @@ _LOCATION_HEAD_TOKENS = {
     "suburbs",
     "town",
     "university",
-}
-_TEMPORAL_LOCATION_BLOCKLIST = {
+})
+_TEMPORAL_LOCATION_BLOCKLIST = frozenset({
     "monday",
     "tuesday",
     "wednesday",
@@ -358,8 +324,8 @@ _TEMPORAL_LOCATION_BLOCKLIST = {
     "today",
     "tomorrow",
     "yesterday",
-}
-_NON_LOCATION_VALUE_TOKENS = {
+})
+_NON_LOCATION_VALUE_TOKENS = frozenset({
     "bandwidth",
     "gbps",
     "internet",
@@ -369,7 +335,7 @@ _NON_LOCATION_VALUE_TOKENS = {
     "speed",
     "subscription",
     "tier",
-}
+})
 _DURATION_VALUE_PATTERNS = (
     re.compile(
         r"\b(?:around|about|approximately|roughly)?\s*(?P<number>\d+(?:\.\d+)?)\s+"
@@ -401,7 +367,7 @@ _COLOR_VALUE_RE = re.compile(
     r"(?:gray|grey|blue|green|red|yellow|black|white|brown|purple|pink|orange|beige|navy|teal|maroon|gold|silver))\b",
     re.IGNORECASE,
 )
-_DIRECT_OBJECT_VALUE_VERBS = {"bake", "bring", "buy", "cook", "make", "order", "prepare", "purchase", "try"}
+_DIRECT_OBJECT_VALUE_VERBS = frozenset({"bake", "bring", "buy", "cook", "make", "order", "prepare", "purchase", "try"})
 _DIRECT_OBJECT_TRAILING_PREPS = frozenset({"for", "with", "from", "at", "because", "since", "after", "before"})
 _PRODUCT_VALUE_VERBS = frozenset({"buy", "get", "order", "pick", "purchase", "replace", "swap", "use"})
 _TRAILING_VALUE_SPLIT_RE = re.compile(
@@ -485,9 +451,9 @@ _PREDICATE_STATE_ATTRIBUTE_MAP = {
     "study": "studying",
     "use": "using",
 }
-_WORK_LOCATION_PREPOSITIONS = {"at", "in", "for", "with"}
-_LOCATION_PREPOSITIONS = {"at", "in", "near", "inside", "within", "on", "to"}
-_BRANDABLE_PRODUCT_HEADS = {
+_WORK_LOCATION_PREPOSITIONS = frozenset({"at", "in", "for", "with"})
+_LOCATION_PREPOSITIONS = frozenset({"at", "in", "near", "inside", "within", "on", "to"})
+_BRANDABLE_PRODUCT_HEADS = frozenset({
     "shampoo",
     "conditioner",
     "soap",
@@ -503,13 +469,7 @@ _BRANDABLE_PRODUCT_HEADS = {
     "sauce",
     "snack",
     "detergent",
-}
-
-
-@lru_cache(maxsize=1)
-def _get_spacy_nlp():
-    import spacy  # deferred: thinc pulls torch at module level; delay until first parse
-    return spacy.load("en_core_web_sm", disable=["ner"])
+})
 
 
 @lru_cache(maxsize=10000)
@@ -523,7 +483,7 @@ def _cached_spacy_doc(text: str):
     from shared.perf import get_counters
     from shared.cache import disk_get, disk_put, text_key
 
-    nlp = _get_spacy_nlp()
+    nlp = _get_nlp()
     _key = text_key(str(text or ""))
 
     cached_bytes = disk_get("spacy_doc", _key)
@@ -890,7 +850,6 @@ def _trim_to_location_head(text: str) -> str:
     if m:
         text = text[: m.start()].strip()
     # Also strip trailing temporal references ("last Sunday", "last summer", "this week")
-    _TEMPORAL_ADVERBS = {"last", "this", "next", "every", "each", "ago", "recently", "yesterday", "today", "tomorrow"}
     tokens = text.split()
     trimmed: list[str] = []
     for tok in tokens:

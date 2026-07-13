@@ -11,8 +11,6 @@ from shared.nlp import (
     candidate_views,
     check_stem_equivalence,
     get_clean_tokens,
-    get_stems_for_text,
-    stem_token,
     NOISE_TOKENS,
 )
 from evidence.schema import EvidencePlan

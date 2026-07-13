@@ -8,41 +8,19 @@ import re
 from typing import Any
 
 from shared.nlp import (
+    _NUMBER_WORDS,
     cached_build_profile,
     get_stems_for_text,
     cached_word_tokenize,
     cached_pos_tag,
 )
+from shared.constants import (
+    COMPARISON_QUERY_MARKERS as _COMPARISON_MARKERS,
+    ORDERING_QUERY_MARKERS as _ORDERING_MARKERS,
+    CURRENT_STATE_QUERY_MARKERS as _CURRENT_STATE_MARKERS,
+)
 
 
-
-_NUMBER_WORDS = {
-    "zero",
-    "one",
-    "two",
-    "three",
-    "four",
-    "five",
-    "six",
-    "seven",
-    "eight",
-    "nine",
-    "ten",
-    "eleven",
-    "twelve",
-    "first",
-    "second",
-    "third",
-    "fourth",
-    "fifth",
-    "sixth",
-    "seventh",
-    "eighth",
-    "ninth",
-    "tenth",
-    "eleventh",
-    "twelfth",
-}
 
 _CHOICE_MARKERS = (
     "between",
@@ -71,71 +49,13 @@ _CHOICE_MARKERS = (
     "which one",
 )
 
-_COMPARISON_MARKERS = {
-    "compared against",
-    "compared to",
-    "compared with",
-    "difference between",
-    "difference in",
-    "greater",
-    "higher than",
-    "less",
-    "less than",
-    "lower than",
-    "more",
-    "more than",
-    "smaller",
-    "smaller than",
-    "than",
-    "vs",
-    "versus",
-}
-
-_ORDERING_MARKERS = {
-    "order of",
-    "first",
-    "second",
-    "third",
-    "fourth",
-    "fifth",
-    "before",
-    "after",
-    "earliest",
-    "latest",
-    "earliest to latest",
-    "latest to earliest",
-    "from earliest to latest",
-    "from latest to earliest",
-    "first to last",
-    "last to first",
-    "most recent",
-    "ordered",
-    "sequence",
-}
-
-_CURRENT_STATE_MARKERS = (
-    "as of now",
-    "current ",
-    "current state",
-    "current status",
-    "currently",
-    "final state",
-    "final status",
-    "latest",
-    "now ",
-    "right now",
-    "still ",
-    "what is the current",
-    "what is the latest",
-    "what is the final",
-)
 
 _TEMPORAL_DIFFERENCE_MARKERS = (
     "between",
     "difference between",
     "difference in",
 )
-_GENERIC_TEMPORAL_CONTEXT_ENTITIES = {
+_GENERIC_TEMPORAL_CONTEXT_ENTITIES = frozenset({
     "answer",
     "approval",
     "decision",
@@ -143,8 +63,8 @@ _GENERIC_TEMPORAL_CONTEXT_ENTITIES = {
     "response",
     "result",
     "time",
-}
-_COUNT_SCAFFOLD_TOKENS = {
+})
+_COUNT_SCAFFOLD_TOKENS = frozenset({
     "different",
     "distinct",
     "kind",
@@ -153,7 +73,7 @@ _COUNT_SCAFFOLD_TOKENS = {
     "types",
     "varieties",
     "variety",
-}
+})
 
 _ORDERING_QUERY_RE = re.compile(
     r"\b(order of|ordered|sequence|earliest to latest|latest to earliest|from earliest to latest|from latest to earliest|first to last|last to first|starting from the earliest)\b"
@@ -209,11 +129,11 @@ _ATTRIBUTE_OBJECT_PATTERNS = (
     ),
 )
 
-_FUNCTIONAL_NOUNS = {
+_FUNCTIONAL_NOUNS = frozenset({
     "type", "name", "thing", "buy", "find", "get", "way", "one", "bit", "part",
     "amount", "number", "total", "kind", "sort", "detail", "info", "information",
     "score", "level", "value", "state", "status", "version", "result"
-}
+})
 
 _TEMPORAL_ENTITY_RE = re.compile(
     r"\b("
@@ -324,7 +244,7 @@ def _calculate_specificity_score(
         
     return score
 
-_BOUNDARY_TOKENS = {
+_BOUNDARY_TOKENS = frozenset({
     "a",
     "an",
     "and",
@@ -344,9 +264,9 @@ _BOUNDARY_TOKENS = {
     "what",
     "which",
     "who",
-}
+})
 
-_TEMPORAL_UNIT_TOKENS = {
+_TEMPORAL_UNIT_TOKENS = frozenset({
     "ago",
     "day",
     "days",
@@ -361,9 +281,9 @@ _TEMPORAL_UNIT_TOKENS = {
     "year",
     "years",
     "parentheses",
-}
+})
 
-_GROUNDING_NOISE_ENTITIES = {
+_GROUNDING_NOISE_ENTITIES = frozenset({
     "amount",
     "number",
     "times",
@@ -394,7 +314,7 @@ _GROUNDING_NOISE_ENTITIES = {
     "coupons",
     "price",
     "cost",
-}
+})
 
 _COUNT_QUERY_PREFIX_RE = re.compile(r"\b(?:how\s+many|number\s+of|count\s+of|amount\s+of)\b", re.IGNORECASE)
 _COUNT_ENTITY_STOP_RE = re.compile(
@@ -1364,24 +1284,14 @@ def _preferred_attributes_for_query(normalized_query: str) -> tuple[str, ...]:
     return _dedupe_preserve_order(preferences)
 
 
-def _extract_query_targets_impl(row: dict[str, Any], query_family: str) -> QueryTargets:
-    raw_query = str(row.get("query", "") or "").strip()
-    profile = cached_build_profile(raw_query)
-    normalized_query = profile.normalized_text
-    named_tokens = {token.lower() for token in profile.named_tokens}
-    query_tokens = cached_word_tokenize(normalized_query)
-    query_tags = cached_pos_tag(tuple(query_tokens))
-    family = str(query_family or "").strip().lower()
-
-    choice_markers = _find_markers(normalized_query, _CHOICE_MARKERS)
-    candidate_numbers = _dedupe_preserve_order(_extract_numeric_tokens(raw_query, normalized_query))
-    candidate_entities, subject_entities, context_entities, entities_metadata = _extract_candidate_entities(
-        raw_query,
-        normalized_query,
-        query_tags,
-        named_tokens,
-        query_family=family,
-    )
+def _determine_query_flags(
+    *,
+    normalized_query: str,
+    family: str,
+    choice_markers: tuple[str, ...],
+    candidate_entities: tuple[str, ...],
+) -> dict[str, Any]:
+    """Determine boolean query classification flags from the normalized query."""
     asks_for_comparison = _is_explicit_comparison_query(normalized_query)
     explicit_ordering_markers = {
         marker
@@ -1397,22 +1307,21 @@ def _extract_query_targets_impl(row: dict[str, Any], query_family: str) -> Query
         _has_phrase(normalized_query, _CURRENT_STATE_MARKERS) and not _is_explicit_ordering_query(normalized_query)
     )
     has_from_to = bool(re.search(r"\bfrom\s+.+?\s+to\s+.+$", normalized_query))
-    
-    # Use stem sets to find truly distinct anchors
+
     all_stem_sets = [set(get_stems_for_text(e)) for e in candidate_entities if e]
     distinct_stem_sets = []
     for s_set in all_stem_sets:
         if not any(s_set.issubset(other) or other.issubset(s_set) for other in distinct_stem_sets):
             distinct_stem_sets.append(s_set)
-    
-    has_two_anchors = len(distinct_stem_sets) >= 2 or (len(distinct_stem_sets) == 1 and any(token in normalized_query for token in {"between", "after", "before", "since", "until"}))
 
-    relative_since_query = bool(
-        re.search(
-            r"\bhow\s+(?:long|many)\b.*\b(?:ago|have\s+passed\s+since|has\s+it\s+been\s+since)\b",
-            normalized_query,
-        )
+    has_two_anchors = len(distinct_stem_sets) >= 2 or (
+        len(distinct_stem_sets) == 1
+        and any(token in normalized_query for token in {"between", "after", "before", "since", "until"})
     )
+    relative_since_query = bool(re.search(
+        r"\bhow\s+(?:long|many)\b.*\b(?:ago|have\s+passed\s+since|has\s+it\s+been\s+since)\b",
+        normalized_query,
+    ))
     asks_for_relative_time = bool(
         _extract_relative_time_entities(normalized_query)
         or re.search(r"\bhow\s+(?:long|many)\b.*\bago\b", normalized_query)
@@ -1420,19 +1329,32 @@ def _extract_query_targets_impl(row: dict[str, Any], query_family: str) -> Query
         or re.search(r"\bhow\s+many\s+(?:days?|weeks?|months?|years?)\s+(?:older|younger)\b.*\bthan\s+when\s+i\b", normalized_query)
     )
     asks_for_temporal_difference = not asks_for_relative_time and _is_explicit_temporal_difference_query(
-        normalized_query,
-        has_from_to=has_from_to,
-        has_two_anchors=has_two_anchors,
+        normalized_query, has_from_to=has_from_to, has_two_anchors=has_two_anchors,
     )
+    return {
+        "asks_for_comparison": asks_for_comparison,
+        "asks_for_ordering": asks_for_ordering,
+        "asks_for_current_state": asks_for_current_state,
+        "asks_for_relative_time": asks_for_relative_time,
+        "asks_for_temporal_difference": asks_for_temporal_difference,
+        "has_from_to": has_from_to,
+    }
+
+
+def _apply_family_entity_pruning(
+    *,
+    family: str,
+    normalized_query: str,
+    candidate_entities: tuple[str, ...],
+    subject_entities: tuple[str, ...],
+    context_entities: tuple[str, ...],
+    asks_for_relative_time: bool,
+    asks_for_temporal_difference: bool,
+    has_from_to: bool,
+) -> tuple[tuple[str, ...], tuple[str, ...], tuple[str, ...], bool]:
+    """Apply family-specific entity pruning. Returns updated entities and temporal_difference flag."""
     if family in {"temporal", "information_extraction"}:
-        # Strip trailing temporal anchors from entity keys so that
-        # "jewelry last saturday" → "jewelry" and "music event last saturday"
-        # → "music event".  This prevents slot binding from needing the full
-        # temporally-anchored phrase verbatim in the source memory.
-        stripped_candidates = tuple(
-            _strip_trailing_temporal_anchor(e) for e in candidate_entities
-        )
-        # Re-dedupe in case stripping caused collisions.
+        stripped_candidates = tuple(_strip_trailing_temporal_anchor(e) for e in candidate_entities)
         seen_stripped: set[str] = set()
         deduped_stripped: list[str] = []
         for ent in stripped_candidates:
@@ -1440,9 +1362,9 @@ def _extract_query_targets_impl(row: dict[str, Any], query_family: str) -> Query
                 seen_stripped.add(ent)
                 deduped_stripped.append(ent)
         candidate_entities = tuple(deduped_stripped)
-        subject_entities = tuple(e for e in (
-            _strip_trailing_temporal_anchor(e) for e in subject_entities
-        ) if e)
+        subject_entities = tuple(
+            e for e in (_strip_trailing_temporal_anchor(e) for e in subject_entities) if e
+        )
     if family == "temporal":
         candidate_entities = _filter_temporal_entities(candidate_entities)
         if asks_for_relative_time:
@@ -1465,20 +1387,33 @@ def _extract_query_targets_impl(row: dict[str, Any], query_family: str) -> Query
                 if any(stems <= other or other <= stems for other in pruned_stem_sets):
                     continue
                 pruned_stem_sets.append(stems)
-            pruned_anchor_count = len(pruned_stem_sets)
             if (
-                pruned_anchor_count < 2
+                len(pruned_stem_sets) < 2
                 and not has_from_to
                 and not re.search(r"\b(after|before|between|since|until)\b", normalized_query)
             ):
                 asks_for_temporal_difference = False
     if family == "aggregation":
         candidate_entities = _prune_count_clause_entities(
-            candidate_entities,
-            normalized_query=normalized_query,
+            candidate_entities, normalized_query=normalized_query,
         )
         subject_entities = tuple(entity for entity in subject_entities if entity in candidate_entities)
         context_entities = tuple(entity for entity in context_entities if entity in candidate_entities)
+    return candidate_entities, subject_entities, context_entities, asks_for_temporal_difference
+
+
+def _assemble_final_entities(
+    *,
+    raw_query: str,
+    normalized_query: str,
+    family: str,
+    candidate_entities: tuple[str, ...],
+    subject_entities: tuple[str, ...],
+    context_entities: tuple[str, ...],
+    asks_for_comparison: bool,
+    asks_for_ordering: bool,
+) -> tuple[tuple[str, ...], tuple[str, ...], tuple[str, ...], tuple[str, ...], tuple[str, ...], bool]:
+    """Resolve alternative/count entities and recall support. Returns final entity tuples and recall flag."""
     asks_for_recall_support = bool(
         _has_phrase(normalized_query, _RECALL_SUPPORT_MARKERS)
         or (
@@ -1489,18 +1424,9 @@ def _extract_query_targets_impl(row: dict[str, Any], query_family: str) -> Query
         or (family in {"single_anchor", "information_extraction"} and _has_phrase(normalized_query, ("what did i", "which one", "the one")))
     )
     ordered_choice_entities = tuple(_dedupe_preserve_order(_extract_choice_entities(raw_query.lower())))
-    count_entities = tuple()
+    count_entities: tuple[str, ...] = ()
     if family in {"aggregation", "current_state"} and _distinct_count_like_query(normalized_query):
         count_entities = tuple(_extract_count_query_entities(normalized_query))
-    schema_name = _infer_schema_name(
-        family=family,
-        asks_for_comparison=asks_for_comparison,
-        asks_for_ordering=asks_for_ordering,
-        asks_for_temporal_difference=asks_for_temporal_difference,
-        asks_for_relative_time=asks_for_relative_time,
-        asks_for_current_state=asks_for_current_state,
-        asks_for_recall_support=asks_for_recall_support,
-    )
     alternative_entities = (
         ordered_choice_entities[:2]
         if len(ordered_choice_entities) >= 2 and (asks_for_ordering or asks_for_comparison)
@@ -1516,33 +1442,67 @@ def _extract_query_targets_impl(row: dict[str, Any], query_family: str) -> Query
             for entity in candidate_entities
             if entity not in count_entities and not _is_count_scaffold_entity(entity, count_entities)
         )
-        # For count queries, subject_entities should represent the counted object(s).
-        # Surrounding usage/activity/location context remains available, but as context.
         subject_entities = count_entities
         alternative_entities = _prune_count_scaffold_alternatives(
-            alternative_entities,
-            count_entities=count_entities,
+            alternative_entities, count_entities=count_entities,
         )
         context_entities = tuple(
             entity for entity in candidate_entities if entity not in subject_entities
         )
+    return candidate_entities, subject_entities, context_entities, alternative_entities, count_entities, asks_for_recall_support
+
+
+def _extract_query_targets_impl(row: dict[str, Any], query_family: str) -> QueryTargets:
+    raw_query = str(row.get("query", "") or "").strip()
+    profile = cached_build_profile(raw_query)
+    normalized_query = profile.normalized_text
+    named_tokens = {token.lower() for token in profile.named_tokens}
+    query_tokens = cached_word_tokenize(normalized_query)
+    query_tags = cached_pos_tag(tuple(query_tokens))
+    family = str(query_family or "").strip().lower()
+
+    choice_markers = _find_markers(normalized_query, _CHOICE_MARKERS)
+    candidate_numbers = _dedupe_preserve_order(_extract_numeric_tokens(raw_query, normalized_query))
+    candidate_entities, subject_entities, context_entities, entities_metadata = _extract_candidate_entities(
+        raw_query, normalized_query, query_tags, named_tokens, query_family=family,
+    )
+    flags = _determine_query_flags(
+        normalized_query=normalized_query, family=family,
+        choice_markers=choice_markers, candidate_entities=candidate_entities,
+    )
+    candidate_entities, subject_entities, context_entities, asks_for_temporal_difference = _apply_family_entity_pruning(
+        family=family, normalized_query=normalized_query,
+        candidate_entities=candidate_entities, subject_entities=subject_entities,
+        context_entities=context_entities,
+        asks_for_relative_time=flags["asks_for_relative_time"],
+        asks_for_temporal_difference=flags["asks_for_temporal_difference"],
+        has_from_to=flags["has_from_to"],
+    )
+    candidate_entities, subject_entities, context_entities, alternative_entities, _, asks_for_recall_support = _assemble_final_entities(
+        raw_query=raw_query, normalized_query=normalized_query, family=family,
+        candidate_entities=candidate_entities, subject_entities=subject_entities,
+        context_entities=context_entities,
+        asks_for_comparison=flags["asks_for_comparison"],
+        asks_for_ordering=flags["asks_for_ordering"],
+    )
+    schema_name = _infer_schema_name(
+        family=family,
+        asks_for_comparison=flags["asks_for_comparison"],
+        asks_for_ordering=flags["asks_for_ordering"],
+        asks_for_temporal_difference=asks_for_temporal_difference,
+        asks_for_relative_time=flags["asks_for_relative_time"],
+        asks_for_current_state=flags["asks_for_current_state"],
+        asks_for_recall_support=asks_for_recall_support,
+    )
     preferred_attributes = _preferred_attributes_for_query(normalized_query)
     required_slots = _required_slots_for_schema(schema_name)
     answerability_hints = {
-        "requires_reference_time": asks_for_relative_time,
-        "requires_ordering": asks_for_ordering,
-        "requires_numeric_reasoning": asks_for_comparison
+        "requires_reference_time": flags["asks_for_relative_time"],
+        "requires_ordering": flags["asks_for_ordering"],
+        "requires_numeric_reasoning": flags["asks_for_comparison"]
         or asks_for_temporal_difference
         or (" how much " in f" {normalized_query} "),
         "requires_support": asks_for_recall_support,
-    }
-    planning_payload = {
-        "query_family": family,
-        "schema_name": schema_name,
-        "required_slots": required_slots,
-        "alternative_entities": alternative_entities,
-        "preferred_attributes": preferred_attributes,
-        "answerability_hints": answerability_hints,
     }
 
     return QueryTargets(
@@ -1557,15 +1517,22 @@ def _extract_query_targets_impl(row: dict[str, Any], query_family: str) -> Query
         candidate_numbers=candidate_numbers,
         preferred_attributes=preferred_attributes,
         choice_markers=choice_markers,
-        asks_for_comparison=asks_for_comparison,
-        asks_for_ordering=asks_for_ordering,
-        asks_for_current_state=asks_for_current_state,
+        asks_for_comparison=flags["asks_for_comparison"],
+        asks_for_ordering=flags["asks_for_ordering"],
+        asks_for_current_state=flags["asks_for_current_state"],
         asks_for_temporal_difference=asks_for_temporal_difference,
-        asks_for_relative_time=asks_for_relative_time,
+        asks_for_relative_time=flags["asks_for_relative_time"],
         asks_for_recall_support=asks_for_recall_support,
         required_slots=required_slots,
         answerability_hints=answerability_hints,
-        planning_payload=planning_payload,
+        planning_payload={
+            "query_family": family,
+            "schema_name": schema_name,
+            "required_slots": required_slots,
+            "alternative_entities": alternative_entities,
+            "preferred_attributes": preferred_attributes,
+            "answerability_hints": answerability_hints,
+        },
         entities_metadata=entities_metadata,
     )
 

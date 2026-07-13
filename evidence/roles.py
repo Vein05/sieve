@@ -5,44 +5,14 @@ from __future__ import annotations
 import re
 from typing import Any
 
-from shared.nlp import cached_build_profile
 from .units import EvidenceUnit
 from retrieval.query_targets import QueryTargets
 
 from shared.nlp import cached_build_profile, stem_token, cached_word_tokenize, cached_pos_tag
-
-
-
-_COMPARISON_FALLBACK_MARKERS = (
-    " compared ",
-    " more ",
-    " less ",
-    " higher ",
-    " lower ",
-    " bigger ",
-    " smaller ",
-    " versus ",
-    " vs ",
-)
-
-_ORDERING_MARKERS = (
-    " first ",
-    " second ",
-    " third ",
-    " before ",
-    " after ",
-    " order ",
-)
-
-_CURRENT_STATE_WORDS = (
-    "currently",
-    "current ",
-    "right now",
-    "now use",
-    "now uses",
-    "now using",
-    "still ",
-    "as of",
+from shared.constants import (
+    COMPARISON_FALLBACK_MARKERS as _COMPARISON_FALLBACK_MARKERS,
+    ORDERING_ROLE_MARKERS as _ORDERING_MARKERS,
+    CURRENT_STATE_WORDS as _CURRENT_STATE_WORDS,
 )
 
 _SOURCE_NUMERIC_RE = re.compile(r"\$?\d[\d,]*(?:\.\d+)?%?")
@@ -78,7 +48,7 @@ _GENERIC_TYPE_LIST_RE = re.compile(
     r"\b(?:there (?:are|were)|different types of|different kinds of|types of|kinds of|varieties of|here are some)\b",
     re.IGNORECASE,
 )
-_COUNT_SCAFFOLD_TOKENS = {
+_COUNT_SCAFFOLD_TOKENS = frozenset({
     "different",
     "distinct",
     "kind",
@@ -87,9 +57,9 @@ _COUNT_SCAFFOLD_TOKENS = {
     "types",
     "varieties",
     "variety",
-}
+})
 
-_ENTITY_MATCH_STOPWORDS = {
+_ENTITY_MATCH_STOPWORDS = frozenset({
     "a",
     "an",
     "and",
@@ -114,16 +84,16 @@ _ENTITY_MATCH_STOPWORDS = {
     "was",
     "were",
     "with",
-}
-_GENERIC_ORDERING_ENTITY_TOKENS = {
+})
+_GENERIC_ORDERING_ENTITY_TOKENS = frozenset({
     "arrival",
     "event",
     "participation",
     "post",
     "task",
-}
+})
 
-_COUNT_LOOKUP_OBJECT_SKIP_TOKENS = {
+_COUNT_LOOKUP_OBJECT_SKIP_TOKENS = frozenset({
     "many",
     "much",
     "total",
@@ -135,9 +105,9 @@ _COUNT_LOOKUP_OBJECT_SKIP_TOKENS = {
     "times",
     "item",
     "items",
-}
+})
 
-_COUNT_TARGET_NOISE_TOKENS = {
+_COUNT_TARGET_NOISE_TOKENS = frozenset({
     "all",
     "amount",
     "both",
@@ -165,7 +135,7 @@ _COUNT_TARGET_NOISE_TOKENS = {
     "types",
     "varieties",
     "variety",
-}
+})
 
 
 def _typed_roles(
@@ -593,6 +563,307 @@ def _duration_like_unit(normalized_text: str) -> bool:
     return bool(_DURATION_PHRASE_RE.search(normalized_text))
 
 
+_NUMERIC_CONTEXT_MARKERS = frozenset({
+    " amount ", " assist ", " assists ", " bill ", " bills ",
+    " charge ", " charges ", " cost ", " costs ", " day ", " days ",
+    " discount ", " fare ", " fee ", " fees ", " goal ", " goals ",
+    " hour ", " hours ", " minute ", " minutes ", " month ", " months ",
+    " paid ", " payment ", " payments ", " price ", " receipt ",
+    " save ", " saved ", " score ", " scored ", " spend ", " spent ",
+    " taxes ", " value ", " week ", " weeks ", " year ", " years ",
+})
+
+_EXPLICIT_REFERENCE_PHRASES = frozenset({
+    "as of", "current as of", "reference date", "reference time",
+    "reference point", "today is", "now is", "at this time",
+})
+
+_RECALL_SUPPORT_UNIT_MARKERS = frozenset({
+    "recommend", "recommended", "mention", "mentioned",
+    "told you", "told me", "the one", "last time", "yesterday",
+})
+
+_SMALL_NUMBER_WORDS = frozenset({
+    "one", "two", "three", "four", "five",
+    "six", "seven", "eight", "nine", "ten",
+})
+
+
+def _compute_role_signals(
+    *,
+    row: dict[str, Any],
+    query_family: str,
+    query_targets: QueryTargets,
+    unit: EvidenceUnit,
+) -> dict[str, Any]:
+    """Compute all matching signals used by role assignment."""
+    query_profile = cached_build_profile(str(row.get("query", "")))
+    source_text = str(unit.provenance.get("source_text") or unit.render_text)
+    unit_profile = cached_build_profile(source_text)
+    normalized = unit_profile.normalized_text
+    query_text = query_targets.normalized_query
+    source_numeric_values = [m.group(0) for m in _SOURCE_NUMERIC_RE.finditer(source_text)]
+    query_content_tokens = set(query_profile.content_tokens)
+    unit_content_tokens = set(unit_profile.content_tokens)
+    padded_normalized = f" {normalized} "
+    query_stems = {_stem_token(t) for t in query_content_tokens}
+    unit_stems = {_stem_token(t) for t in unit_content_tokens}
+    query_overlap = max(
+        len(query_content_tokens & unit_content_tokens),
+        len(query_stems & unit_stems),
+    )
+    named_overlap = bool(query_profile.named_tokens & set(unit.entity_tokens))
+    explicit_numeric = any(
+        v.startswith("$") or "%" in v or "." in v or "," in v or v.isdigit()
+        for v in source_numeric_values
+    ) or any(f" {w} " in padded_normalized for w in _SMALL_NUMBER_WORDS)
+    has_time = unit.is_temporal_anchor or bool(unit.time_markers) or unit.unit_type == "dated_event"
+    has_update = unit.is_update_assertion or bool(unit.update_markers)
+    has_answerish_source = bool(_ANSWERISH_SOURCE_RE.search(source_text))
+    has_explicit_reference = any(p in normalized for p in _EXPLICIT_REFERENCE_PHRASES)
+    has_current_state_language = any(p in normalized for p in _CURRENT_STATE_WORDS)
+    moderate_lexical_match = query_overlap >= 2
+    duration_query = _duration_like_query(query_text, query_family, query_targets)
+    duration_unit = _duration_like_unit(normalized)
+    count_query = _count_like_query(query_text) and not duration_query
+    count_target_stem_sets = _count_target_stem_sets(query_targets) if count_query else []
+    primary_entities = tuple(e for e in query_targets.subject_entities[:2] if e) or tuple(
+        e for e in query_targets.candidate_entities if e
+    )
+    entity_match = any(_entity_phrase_matches_unit(e, unit, unit_profile) for e in primary_entities)
+    count_friendly_numeric = explicit_numeric and not _DURATION_PHRASE_RE.search(source_text) and not any(
+        v.startswith("$") or "%" in v for v in source_numeric_values
+    )
+    typed_count_evidence = (
+        unit.is_answer_like_quantity_statement
+        or unit.is_instructional_quantity
+        or unit.has_progress_marker
+        or (unit.is_countable_item and (unit.has_acquisition_marker or unit.has_consumption_or_completion_marker))
+    )
+    count_target_match = any(ss & unit_stems for ss in count_target_stem_sets)
+    return {
+        "unit_profile": unit_profile,
+        "normalized": normalized,
+        "query_text": query_text,
+        "source_text": source_text,
+        "padded_normalized": padded_normalized,
+        "unit_stems": unit_stems,
+        "query_overlap": query_overlap,
+        "named_overlap": named_overlap,
+        "explicit_numeric": explicit_numeric,
+        "has_time": has_time,
+        "has_update": has_update,
+        "has_answerish_source": has_answerish_source,
+        "has_explicit_reference": has_explicit_reference,
+        "has_current_state_language": has_current_state_language,
+        "moderate_lexical_match": moderate_lexical_match,
+        "strong_named_match": named_overlap,
+        "strong_lexical_match": query_overlap >= 3,
+        "recommend_lookup": "recommend" in query_text and "recommend" in normalized,
+        "designation_lookup": (
+            any(m in query_text for m in ("designation", "name", "called"))
+            and any(m in source_text for m in ('"', "'", ":"))
+        ),
+        "duration_query": duration_query,
+        "duration_unit": duration_unit,
+        "count_query": count_query,
+        "count_target_stem_sets": count_target_stem_sets,
+        "comparison_like_query": query_family == "aggregation" and (
+            query_targets.asks_for_comparison
+            or any(m in f" {query_text} " for m in _COMPARISON_FALLBACK_MARKERS)
+        ),
+        "choice_like_query": " or " in f" {query_text} ",
+        "ordering_like_query": query_family == "ordering" or any(
+            m in f" {query_text} " for m in _ORDERING_MARKERS
+        ),
+        "entity_match": entity_match,
+        "numeric_context_match": any(m in padded_normalized for m in _NUMERIC_CONTEXT_MARKERS),
+        "count_friendly_numeric": count_friendly_numeric,
+        "typed_count_item": unit.is_countable_item,
+        "typed_count_evidence": typed_count_evidence,
+        "event_count_activity": bool(
+            unit.has_acquisition_marker or unit.has_consumption_or_completion_marker or unit.is_countable_item
+        ),
+        "count_target_match": count_target_match,
+        "matched_count_target_count": sum(1 for ss in count_target_stem_sets if ss & unit_stems),
+        "count_activity_like": (
+            unit.is_countable_item or explicit_numeric
+            or (has_answerish_source and (unit.speaker == "user" or unit.has_pronoun_language))
+        ),
+        "event_like": (
+            named_overlap or query_overlap >= 2
+            or (unit.unit_type == "dated_event" and not has_explicit_reference and query_overlap >= 1)
+        ),
+    }
+
+
+def _assign_direct_anchor_tags(
+    *,
+    tags: set[str],
+    query_family: str,
+    query_targets: QueryTargets,
+    unit: EvidenceUnit,
+    sig: dict[str, Any],
+) -> None:
+    """Add direct_anchor and support_anchor tags based on matching signals."""
+    if sig["comparison_like_query"] or sig["choice_like_query"]:
+        if sig["strong_named_match"] or sig["strong_lexical_match"]:
+            tags.add("direct_anchor")
+    elif sig["strong_named_match"] or sig["strong_lexical_match"]:
+        tags.add("direct_anchor")
+    if query_family in {"current_state", "knowledge_update", "conflict_update"} and (
+        unit.is_current_state_candidate or unit.is_state_assertion or unit.is_update_assertion
+        or (sig["has_current_state_language"] and (sig["named_overlap"] or sig["query_overlap"] >= 1))
+        or (sig["has_update"] and (sig["named_overlap"] or sig["query_overlap"] >= 1))
+    ):
+        tags.add("direct_anchor")
+    is_sa_ie = query_family in {"single_anchor", "information_extraction"}
+    if is_sa_ie and unit.is_direct_answer_candidate:
+        tags.add("direct_anchor")
+    if is_sa_ie and (sig["recommend_lookup"] or sig["designation_lookup"]):
+        if (
+            unit.is_direct_answer_candidate or sig["designation_lookup"]
+            or sig["entity_match"] or len(sig["normalized"].split()) <= 8
+            or not sig["recommend_lookup"]
+        ):
+            tags.add("direct_anchor")
+    if is_sa_ie and _CERTIFICATION_SOURCE_RE.search(sig["source_text"]):
+        tags.add("direct_anchor")
+    if is_sa_ie and _FAVORITE_VALUE_RE.search(sig["source_text"]):
+        tags.add("direct_anchor")
+    if is_sa_ie and "ethnicity" in sig["query_text"] and "ethnicity" in sig["normalized"]:
+        tags.add("direct_anchor")
+    if is_sa_ie and "stance" in sig["query_text"] and "used to be" in sig["normalized"]:
+        tags.add("direct_anchor")
+    if sig["duration_query"] and sig["duration_unit"]:
+        tags.add("direct_anchor")
+    if query_family in {"single_anchor", "information_extraction", "aggregation"} and sig["explicit_numeric"] and sig["moderate_lexical_match"]:
+        tags.add("direct_anchor")
+    if query_targets.asks_for_recall_support and sig["entity_match"]:
+        tags.add("direct_anchor")
+    if is_sa_ie and sig["query_overlap"] >= 1 and sig["has_answerish_source"]:
+        tags.add("direct_anchor")
+    if is_sa_ie and sig["query_text"].startswith("where "):
+        if _WHERE_LOCATION_RE.search(sig["source_text"]):
+            tags.add("direct_anchor")
+        if _WHERE_IT_WAS_RE.search(sig["source_text"]):
+            tags.add("direct_anchor")
+    if sig["moderate_lexical_match"] or sig["strong_named_match"] or unit.is_direct_answer_candidate:
+        tags.add("support_anchor")
+
+
+def _assign_count_query_tags(
+    *,
+    tags: set[str],
+    query_family: str,
+    query_targets: QueryTargets,
+    unit: EvidenceUnit,
+    sig: dict[str, Any],
+) -> bool:
+    """Apply count-query role tags. Returns True if caller should early-return tags."""
+    if query_family != "aggregation" or not sig["count_query"]:
+        return False
+    if unit.is_question_or_request or unit.is_recommendation_or_advice:
+        answer_bearing = bool(
+            sig["typed_count_evidence"]
+            and (sig["count_target_match"] or sig["query_overlap"] >= 1 or sig["entity_match"])
+            and sig["explicit_numeric"]
+        )
+        if not answer_bearing:
+            tags.discard("count_item")
+            tags.discard("count_evidence")
+            return True
+    if _GENERIC_TYPE_LIST_RE.search(sig["source_text"]):
+        subject_entity_match = bool(
+            query_targets.subject_entities
+            and any(ss & sig["unit_stems"] for ss in _count_target_stem_sets(query_targets))
+        )
+        needs_multi = len(tuple(e for e in query_targets.subject_entities if e)) >= 2
+        if (
+            unit.speaker == "assistant" and not _FIRST_PERSON_RE.search(sig["source_text"])
+            and (not subject_entity_match or (needs_multi and sig["matched_count_target_count"] < 2))
+        ):
+            tags.discard("count_item")
+            tags.discard("count_evidence")
+    required_subject_matches = len(tuple(e for e in query_targets.subject_entities if e))
+    if (
+        unit.speaker == "assistant" and required_subject_matches >= 2
+        and sig["matched_count_target_count"] < 2
+        and not _FIRST_PERSON_RE.search(sig["source_text"])
+    ):
+        tags.discard("count_item")
+        tags.discard("count_evidence")
+    if sig["typed_count_evidence"] or (
+        sig["count_friendly_numeric"] and sig["count_target_match"]
+        and (sig["moderate_lexical_match"] or sig["entity_match"] or sig["query_overlap"] >= 1)
+    ):
+        tags.add("count_evidence")
+    count_object_stems = _extract_count_object_stems(sig["query_text"])
+    fallback_count_match = bool(count_object_stems and (count_object_stems & sig["unit_stems"]))
+    prefer_fact_statement = bool(
+        (unit.is_answer_like_quantity_statement or unit.is_instructional_quantity or unit.has_progress_marker)
+        and not sig["typed_count_item"] and not unit.has_consumption_or_completion_marker
+    )
+    if (
+        (sig["count_target_match"] or fallback_count_match)
+        and (sig["count_activity_like"] or sig["event_count_activity"])
+        and not unit.is_recommendation_or_advice and not prefer_fact_statement
+    ):
+        tags.add("count_item")
+        tags.add("support_anchor")
+        if sig["typed_count_evidence"] or sig["explicit_numeric"]:
+            tags.add("count_evidence")
+    if sig["typed_count_item"] and (
+        sig["event_like"] or sig["entity_match"] or sig["query_overlap"] >= 1
+    ):
+        tags.add("count_item")
+        tags.add("support_anchor")
+    return False
+
+
+def _assign_family_specific_tags(
+    *,
+    tags: set[str],
+    query_family: str,
+    query_targets: QueryTargets,
+    unit: EvidenceUnit,
+    sig: dict[str, Any],
+) -> None:
+    """Apply family-specific support, state, and temporal tags."""
+    is_sa_ie = query_family in {"single_anchor", "information_extraction"}
+    if is_sa_ie and sig["query_text"].startswith("where "):
+        if _WHERE_LOCATION_RE.search(sig["source_text"]):
+            tags.add("support_anchor")
+        if _WHERE_IT_WAS_RE.search(sig["source_text"]):
+            tags.add("support_anchor")
+    if query_family == "current_state":
+        if sig["has_current_state_language"] and (sig["named_overlap"] or sig["query_overlap"] >= 2):
+            tags.add("current_resolution")
+            tags.add("state_anchor")
+        if sig["strong_named_match"] or sig["moderate_lexical_match"]:
+            tags.add("state_anchor")
+            tags.add("direct_anchor")
+    if query_family in {"knowledge_update", "conflict_update"} and (sig["has_update"] or sig["has_explicit_reference"]):
+        tags.add("update_anchor")
+        tags.add("state_anchor")
+    if query_family == "temporal":
+        if sig["has_time"] and (
+            sig["event_like"]
+            or (unit.unit_type in {"dated_event", "update_fact"} and not sig["has_explicit_reference"])
+        ):
+            tags.add("event_anchor")
+        if "ago" in sig["query_text"] and sig["has_explicit_reference"]:
+            tags.add("reference_time")
+    if query_targets.asks_for_recall_support and any(
+        m in sig["normalized"] for m in _RECALL_SUPPORT_UNIT_MARKERS
+    ) and (
+        sig["entity_match"] or sig["query_overlap"] >= 2
+        or len(sig["normalized"].split()) >= 8
+        or any(m in sig["normalized"] for m in ("the one", "last time", "yesterday", "told you", "told me"))
+    ):
+        tags.add("support_anchor")
+
+
 def infer_unit_roles(
     *,
     row: dict[str, Any],
@@ -601,371 +872,59 @@ def infer_unit_roles(
     unit: EvidenceUnit,
     memory_labels_by_id: dict[str, dict[str, Any]],
 ) -> set[str]:
-    query_profile = cached_build_profile(str(row.get("query", "")))
-    source_text = str(unit.provenance.get("source_text") or unit.render_text)
-    unit_profile = cached_build_profile(source_text)
-    normalized = unit_profile.normalized_text
-    query_text = query_targets.normalized_query
-    source_numeric_values = [match.group(0) for match in _SOURCE_NUMERIC_RE.finditer(source_text)]
-    query_content_tokens = set(query_profile.content_tokens)
-    unit_content_tokens = set(unit_profile.content_tokens)
-    padded_normalized = f" {normalized} "
-    query_stems = {_stem_token(token) for token in query_content_tokens}
-    unit_stems = {_stem_token(token) for token in unit_content_tokens}
-    query_overlap = max(
-        len(query_content_tokens & unit_content_tokens),
-        len(query_stems & unit_stems),
+    sig = _compute_role_signals(
+        row=row, query_family=query_family, query_targets=query_targets, unit=unit,
     )
-    named_overlap = bool(query_profile.named_tokens & set(unit.entity_tokens))
-    explicit_numeric = any(
-        value.startswith("$")
-        or "%" in value
-        or "." in value
-        or "," in value
-        or value.isdigit()
-        for value in source_numeric_values
-    ) or any(f" {word} " in padded_normalized for word in ("one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten"))
-    typed_numeric_operand = unit.is_numeric_operand
-    has_time = unit.is_temporal_anchor or bool(unit.time_markers) or unit.unit_type == "dated_event"
-    has_update = unit.is_update_assertion or bool(unit.update_markers)
-    has_answerish_source = bool(_ANSWERISH_SOURCE_RE.search(source_text))
-    has_explicit_reference = any(
-        phrase in normalized
-        for phrase in (
-            "as of",
-            "current as of",
-            "reference date",
-            "reference time",
-            "reference point",
-            "today is",
-            "now is",
-            "at this time",
-        )
-    )
-    has_current_state_language = any(phrase in normalized for phrase in _CURRENT_STATE_WORDS)
-    moderate_lexical_match = query_overlap >= 2
-    recommend_lookup = "recommend" in query_text and "recommend" in normalized
-    designation_lookup = any(marker in query_text for marker in ("designation", "name", "called")) and any(
-        marker in source_text for marker in ('"', "'", ":")
-    )
-    duration_query = _duration_like_query(query_text, query_family, query_targets)
-    duration_unit = _duration_like_unit(normalized)
-    count_query = _count_like_query(query_text) and not duration_query
-    count_target_stem_sets = _count_target_stem_sets(query_targets) if count_query else []
-    comparison_like_query = query_family == "aggregation" and (
-        query_targets.asks_for_comparison
-        or any(marker in f" {query_text} " for marker in _COMPARISON_FALLBACK_MARKERS)
-    )
-    choice_like_query = " or " in f" {query_text} "
-    ordering_like_query = query_family == "ordering" or any(
-        marker in f" {query_text} " for marker in _ORDERING_MARKERS
-    )
-    primary_entities = tuple(entity for entity in query_targets.subject_entities[:2] if entity) or tuple(
-        entity for entity in query_targets.candidate_entities if entity
-    )
-    entity_match = any(
-        _entity_phrase_matches_unit(entity, unit, unit_profile)
-        for entity in primary_entities
-    )
-    numeric_context_match = any(
-        marker in padded_normalized
-        for marker in (
-            " amount ",
-            " assist ",
-            " assists ",
-            " bill ",
-            " bills ",
-            " charge ",
-            " charges ",
-            " cost ",
-            " costs ",
-            " day ",
-            " days ",
-            " discount ",
-            " fare ",
-            " fee ",
-            " fees ",
-            " goal ",
-            " goals ",
-            " hour ",
-            " hours ",
-            " minute ",
-            " minutes ",
-            " month ",
-            " months ",
-            " paid ",
-            " payment ",
-            " payments ",
-            " price ",
-            " receipt ",
-            " save ",
-            " saved ",
-            " score ",
-            " scored ",
-            " spend ",
-            " spent ",
-            " taxes ",
-            " value ",
-            " week ",
-            " weeks ",
-            " year ",
-            " years ",
-        )
-    )
-    strong_named_match = named_overlap
-    strong_lexical_match = query_overlap >= 3
-    count_friendly_numeric = explicit_numeric and not _DURATION_PHRASE_RE.search(source_text) and not any(
-        value.startswith("$") or "%" in value
-        for value in source_numeric_values
-    )
-    typed_count_item = unit.is_countable_item
-    typed_count_evidence = (
-        unit.is_answer_like_quantity_statement
-        or unit.is_instructional_quantity
-        or unit.has_progress_marker
-        or (typed_count_item and (unit.has_acquisition_marker or unit.has_consumption_or_completion_marker))
-    )
-    event_count_activity = bool(
-        unit.has_acquisition_marker
-        or unit.has_consumption_or_completion_marker
-        or typed_count_item
-    )
-    count_target_match = any(stem_set & unit_stems for stem_set in count_target_stem_sets)
-    matched_count_target_count = sum(1 for stem_set in count_target_stem_sets if stem_set & unit_stems)
-    count_activity_like = typed_count_item or explicit_numeric or (
-        has_answerish_source and (unit.speaker == "user" or unit.has_pronoun_language)
-    )
-    event_like = (
-        named_overlap
-        or query_overlap >= 2
-        or (unit.unit_type == "dated_event" and not has_explicit_reference and query_overlap >= 1)
-    )
-
     tags: set[str] = _typed_roles(
-        query_family=query_family,
-        query_targets=query_targets,
-        unit=unit,
+        query_family=query_family, query_targets=query_targets, unit=unit,
     )
-    if (explicit_numeric or typed_numeric_operand or duration_query and duration_unit) and (
-        moderate_lexical_match
-        or strong_named_match
-        or entity_match
-        or duration_query and duration_unit
-        or comparison_like_query
-        or numeric_context_match
-        or (count_query and count_friendly_numeric and query_overlap >= 1)
+    # Numeric operand
+    if (sig["explicit_numeric"] or unit.is_numeric_operand or sig["duration_query"] and sig["duration_unit"]) and (
+        sig["moderate_lexical_match"] or sig["strong_named_match"] or sig["entity_match"]
+        or sig["duration_query"] and sig["duration_unit"]
+        or sig["comparison_like_query"] or sig["numeric_context_match"]
+        or (sig["count_query"] and sig["count_friendly_numeric"] and sig["query_overlap"] >= 1)
     ):
         tags.add("numeric_operand")
-    if has_time and (
-        unit.unit_type == "dated_event"
-        or (event_like and query_overlap >= 3)
-    ):
+    # Event/time anchors
+    if sig["has_time"] and (unit.unit_type == "dated_event" or (sig["event_like"] and sig["query_overlap"] >= 3)):
         tags.add("event_anchor")
         tags.add("time_anchor")
-    if has_update or unit.is_update_assertion:
+    if sig["has_update"] or unit.is_update_assertion:
         tags.add("update_anchor")
         tags.add("state_anchor")
-    # Typed field is authoritative; lexical is a supplement when typed didn't fire
     if unit.is_current_state_candidate or unit.is_state_assertion:
         tags.add("current_resolution")
-    elif has_current_state_language:
+    elif sig["has_current_state_language"]:
         tags.add("current_resolution")
-    if query_family == "temporal" and has_time and has_explicit_reference:
+    if query_family == "temporal" and sig["has_time"] and sig["has_explicit_reference"]:
         tags.add("reference_time")
-    if query_family == "ordering" and has_time and (
-        unit.unit_type == "dated_event"
-        or (ordering_like_query and query_overlap >= 3)
+    if query_family == "ordering" and sig["has_time"] and (
+        unit.unit_type == "dated_event" or (sig["ordering_like_query"] and sig["query_overlap"] >= 3)
     ):
         tags.add("event_anchor")
-    if comparison_like_query or choice_like_query:
-        if strong_named_match or strong_lexical_match:
-            tags.add("direct_anchor")
-    elif strong_named_match or strong_lexical_match:
-        tags.add("direct_anchor")
-    # Typed fields are sufficient authority for direct_anchor in state/update families
-    if query_family in {"current_state", "knowledge_update", "conflict_update"} and (
-        unit.is_current_state_candidate
-        or unit.is_state_assertion
-        or unit.is_update_assertion
-        or (has_current_state_language and (named_overlap or query_overlap >= 1))
-        or (has_update and (named_overlap or query_overlap >= 1))
-    ):
-        tags.add("direct_anchor")
-    if query_family in {"single_anchor", "information_extraction"} and unit.is_direct_answer_candidate:
-        tags.add("direct_anchor")
-    if query_family in {"single_anchor", "information_extraction"} and (recommend_lookup or designation_lookup):
-        if (
-            unit.is_direct_answer_candidate
-            or designation_lookup
-            or entity_match
-            or len(normalized.split()) <= 8
-            or not recommend_lookup
-        ):
-            tags.add("direct_anchor")
-    if query_family in {"single_anchor", "information_extraction"} and _CERTIFICATION_SOURCE_RE.search(source_text):
-        tags.add("direct_anchor")
-    if query_family in {"single_anchor", "information_extraction"} and _FAVORITE_VALUE_RE.search(source_text):
-        tags.add("direct_anchor")
-    if query_family in {"single_anchor", "information_extraction"} and "ethnicity" in query_text and "ethnicity" in normalized:
-        tags.add("direct_anchor")
-    if query_family in {"single_anchor", "information_extraction"} and "stance" in query_text and "used to be" in normalized:
-        tags.add("direct_anchor")
-    if duration_query and duration_unit:
-        tags.add("direct_anchor")
-    if query_family in {"single_anchor", "information_extraction", "aggregation"} and explicit_numeric and moderate_lexical_match:
-        tags.add("direct_anchor")
-    if query_targets.asks_for_recall_support and entity_match:
-        tags.add("direct_anchor")
-    if query_family in {"single_anchor", "information_extraction"} and query_overlap >= 1 and has_answerish_source:
-        tags.add("direct_anchor")
-    if query_family in {"single_anchor", "information_extraction"} and query_text.startswith("where ") and _WHERE_LOCATION_RE.search(source_text):
-        tags.add("direct_anchor")
-    if query_family in {"single_anchor", "information_extraction"} and query_text.startswith("where ") and _WHERE_IT_WAS_RE.search(source_text):
-        tags.add("direct_anchor")
-    if moderate_lexical_match or strong_named_match or unit.is_direct_answer_candidate:
-        tags.add("support_anchor")
-    if query_family == "aggregation" and count_query and (
-        unit.is_question_or_request
-        or unit.is_recommendation_or_advice
-    ):
-        answer_bearing_count_fact = bool(
-            typed_count_evidence
-            and (count_target_match or query_overlap >= 1 or entity_match)
-            and explicit_numeric
-        )
-        if not answer_bearing_count_fact:
-            tags.discard("count_item")
-            tags.discard("count_evidence")
-            return tags
-    if query_family == "aggregation" and count_query and _GENERIC_TYPE_LIST_RE.search(source_text):
-        subject_entity_match = bool(
-            query_targets.subject_entities
-            and any(
-                stem_set & unit_stems
-                for stem_set in _count_target_stem_sets(query_targets)
-            )
-        )
-        needs_multi_anchor = len(tuple(entity for entity in query_targets.subject_entities if entity)) >= 2
-        if (
-            unit.speaker == "assistant"
-            and not _FIRST_PERSON_RE.search(source_text)
-            and (
-                not subject_entity_match
-                or (needs_multi_anchor and matched_count_target_count < 2)
-            )
-        ):
-            tags.discard("count_item")
-            tags.discard("count_evidence")
-    if query_family == "aggregation" and count_query:
-        required_subject_matches = len(tuple(entity for entity in query_targets.subject_entities if entity))
-        if (
-            unit.speaker == "assistant"
-            and required_subject_matches >= 2
-            and matched_count_target_count < 2
-            and not _FIRST_PERSON_RE.search(source_text)
-        ):
-            tags.discard("count_item")
-            tags.discard("count_evidence")
-    if query_targets.asks_for_recall_support and any(
-        marker in normalized
-        for marker in (
-            "recommend",
-            "recommended",
-            "mention",
-            "mentioned",
-            "told you",
-            "told me",
-            "the one",
-            "last time",
-            "yesterday",
-        )
-    ) and (
-        entity_match
-        or query_overlap >= 2
-        or len(normalized.split()) >= 8
-        or any(marker in normalized for marker in ("the one", "last time", "yesterday", "told you", "told me"))
-    ):
-        tags.add("support_anchor")
-    if query_family == "aggregation" and count_query and (
-        typed_count_evidence
-        or (
-            count_friendly_numeric
-            and count_target_match
-            and (moderate_lexical_match or entity_match or query_overlap >= 1)
-        )
-    ):
-        tags.add("count_evidence")
-
-    if query_family == "aggregation" and count_query:
-        count_object_stems = _extract_count_object_stems(query_text)
-        fallback_count_match = bool(count_object_stems and (count_object_stems & unit_stems))
-        prefer_fact_statement = bool(
-            (unit.is_answer_like_quantity_statement or unit.is_instructional_quantity or unit.has_progress_marker)
-            and not typed_count_item
-            and not unit.has_consumption_or_completion_marker
-        )
-        if (
-            (count_target_match or fallback_count_match)
-            and (count_activity_like or event_count_activity)
-            and not unit.is_recommendation_or_advice
-            and not prefer_fact_statement
-        ):
-            tags.add("count_item")
-            tags.add("support_anchor")
-            if typed_count_evidence or explicit_numeric:
-                tags.add("count_evidence")
-
-    if query_family == "aggregation" and count_query and typed_count_item and (
-        event_like
-        or entity_match
-        or query_overlap >= 1
-    ):
-        tags.add("count_item")
-        tags.add("support_anchor")
-    if query_family in {"single_anchor", "information_extraction"} and query_text.startswith("where ") and _WHERE_LOCATION_RE.search(source_text):
-        tags.add("support_anchor")
-    if query_family in {"single_anchor", "information_extraction"} and query_text.startswith("where ") and _WHERE_IT_WAS_RE.search(source_text):
-        tags.add("support_anchor")
-    if query_family == "current_state" and (
-        has_current_state_language
-        and (named_overlap or query_overlap >= 2)
-    ):
-        tags.add("current_resolution")
-        tags.add("state_anchor")
-    if query_family == "current_state" and (strong_named_match or moderate_lexical_match):
-        tags.add("state_anchor")
-        tags.add("direct_anchor")
-    if query_family in {"knowledge_update", "conflict_update"} and (has_update or has_explicit_reference):
-        tags.add("update_anchor")
-        tags.add("state_anchor")
-    if query_family == "temporal":
-        if has_time and (
-            event_like
-            or (unit.unit_type in {"dated_event", "update_fact"} and not has_explicit_reference)
-        ):
-            tags.add("event_anchor")
-        if "ago" in query_text and has_explicit_reference:
-            tags.add("reference_time")
-
+    _assign_direct_anchor_tags(
+        tags=tags, query_family=query_family, query_targets=query_targets, unit=unit, sig=sig,
+    )
+    early_return = _assign_count_query_tags(
+        tags=tags, query_family=query_family, query_targets=query_targets, unit=unit, sig=sig,
+    )
+    if early_return:
+        return tags
+    _assign_family_specific_tags(
+        tags=tags, query_family=query_family, query_targets=query_targets, unit=unit, sig=sig,
+    )
+    strong_match = sig["strong_named_match"] or sig["strong_lexical_match"]
     tags |= _comparison_roles(
-        query_targets=query_targets,
-        unit=unit,
-        unit_profile=unit_profile,
-        strong_match=strong_named_match or strong_lexical_match,
-        lexical_match=moderate_lexical_match,
+        query_targets=query_targets, unit=unit, unit_profile=sig["unit_profile"],
+        strong_match=strong_match, lexical_match=sig["moderate_lexical_match"],
     )
     tags |= _temporal_roles(
-        query_family=query_family,
-        query_targets=query_targets,
-        unit=unit,
-        unit_profile=unit_profile,
-        strong_match=strong_named_match or strong_lexical_match,
-        query_overlap=query_overlap,
+        query_family=query_family, query_targets=query_targets, unit=unit,
+        unit_profile=sig["unit_profile"], strong_match=strong_match, query_overlap=sig["query_overlap"],
     )
     tags |= _state_roles(
-        query_family=query_family,
-        unit=unit,
-        strong_match=strong_named_match or strong_lexical_match,
-        lexical_match=moderate_lexical_match,
+        query_family=query_family, unit=unit,
+        strong_match=strong_match, lexical_match=sig["moderate_lexical_match"],
     )
     return tags

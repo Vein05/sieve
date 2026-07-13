@@ -118,10 +118,11 @@ CANONICAL_ATTRIBUTE_ALIASES = {
     "speed": {"speed", "rate", "bandwidth", "mbps", "gbps"},
 }
 
-NOISE_TOKENS = {"'s", "s", "the", "a", "an", "of", "to", "in", "on", "at", "by", "for", "with", "about", "my", "your", "his", "her"}
+NOISE_TOKENS = frozenset({"'s", "s", "the", "a", "an", "of", "to", "in", "on", "at", "by", "for", "with", "about", "my", "your", "his", "her"})
 
 
 _NUMBER_WORDS = {
+    "zero": 0,
     "one": 1,
     "two": 2,
     "three": 3,
@@ -134,6 +135,18 @@ _NUMBER_WORDS = {
     "ten": 10,
     "eleven": 11,
     "twelve": 12,
+    "first": 1,
+    "second": 2,
+    "third": 3,
+    "fourth": 4,
+    "fifth": 5,
+    "sixth": 6,
+    "seventh": 7,
+    "eighth": 8,
+    "ninth": 9,
+    "tenth": 10,
+    "eleventh": 11,
+    "twelfth": 12,
 }
 
 DEFAULT_V2_BUDGET_CONFIG = {
@@ -223,28 +236,24 @@ def cached_build_profile(
 
 # --- Core NLP Utilities ---
 
+from nltk.stem import WordNetLemmatizer as _WNL
+
+_WORDNET_LEMMATIZER = _WNL()
+
+
 def _wordnet_lemma(word: str) -> str:
     """Lookup-based lemmatization via NLTK WordNet — no neural network."""
-    from nltk.stem import WordNetLemmatizer
-
-    _wnl = _wordnet_lemma._wnl  # type: ignore[attr-defined]
     w = word.lower()
-    v = _wnl.lemmatize(w, pos="v")
+    v = _WORDNET_LEMMATIZER.lemmatize(w, pos="v")
     if v != w:
         return v
-    n = _wnl.lemmatize(w, pos="n")
+    n = _WORDNET_LEMMATIZER.lemmatize(w, pos="n")
     if n != w:
         return n
-    a = _wnl.lemmatize(w, pos="a")
+    a = _WORDNET_LEMMATIZER.lemmatize(w, pos="a")
     if a != w:
         return a
     return w
-
-
-# Initialize the lemmatizer once at import time.
-from nltk.stem import WordNetLemmatizer as _WNL
-
-_wordnet_lemma._wnl = _WNL()  # type: ignore[attr-defined]
 
 
 @lru_cache(maxsize=20_000)
