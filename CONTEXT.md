@@ -531,6 +531,28 @@ mechanism battery: CONCAT control, sorted-vs-scrambled, corruption test,
 two-step discrimination probe -> chain rendering as KP-type method):
 `research/award-papers-lessons-2026-07.md`.
 
+**2x2x(+1) PROBE (same day, ~$1, 120 calls, scratchpad-only): the model
+bottleneck is REAL and dominant; the prompt artifact is real but
+secondary.** On 20 all-failing ceiling rows (5 per RB ability), reader
+(Qwen-72B vs DeepSeek-V3-0324) x prompt (span/abstain Q-before vs
+narrative Q-before vs narrative Q-after): best cell per model = 4/20 exact
+(Qwen narrative-Q-before; DeepSeek narrative-Q-after) — prompt fixes
+recover ~20% of failures, DeepSeek-V3 is NOT better than Qwen-72B.
+event_ordering = 0 across ALL 6 model x prompt cells despite complete gold
+AND explicit batch/turn order tags in the rendering; multi_session ~0.
+contradiction moves with prompt alone (0 -> 2/5 Qwen). Failure mode under
+narrative prompts is DERAILMENT (outputs random evidence fragments) or
+re-abstention; prompt sensitivity is model-idiosyncratic (Qwen re-abstains
+when guidelines sit near the answer slot; DeepSeek derails less with
+Q-after) — the reader x presentation instability again. CONSEQUENCES:
+(1) mid-tier readers are capability-bound on event_ordering/multi_session
+— no rendering fix should be expected to move them; chain-rendering bet
+should target contradiction/knowledge_update/temporal where movement
+exists; (2) before declaring event_ordering benchmark-impossible, one
+frontier reader (GPT/Claude-class) must be probed on the same 20 rows;
+(3) the corrected re-run should report per-model best-prompt, since no
+single prompt is best for both models.
+
 ## Retrieval and BM25: keep the questions separate
 
 LongMemEval-S BM25 top-20 averages roughly 700 reader tokens in the published
