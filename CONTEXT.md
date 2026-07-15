@@ -461,6 +461,28 @@ BM25 over the haystack (no gold injection). Confirmation re-run launched on
 the frozen harness with these true stores; same pre-registered thresholds
 (>=15% live, <5% dead), BEAM and LME verdicts reported separately.
 
+**CONFIRMATION-GATE RESULT (true stores, frozen harness, 397 tests pass):
+BEAM CONFIRMED at 24.0% (40/167) retrieval-bound exclusive at B=30;
+LongMemEval-S is the NEGATIVE CONTROL — 10.9% at B=30 decaying to 0.0% by
+B=180 (no saturation at any budget), i.e. on LME the interrogator is
+provably mere aperture: top-200 of the original query recovers 100% of
+missing gold, and honest no-injection pools miss gold on only 44/470 rows.**
+Full writeup: `research/interrogator-confirmation-true-stores-2026-07.md`.
+Key facts binding the method build: (1) reconstruction bias INVERTED — the
+recon store had deflated the probe arm (18.6% -> 24.0% on the common
+denominator; k-reachability fell 61.8% -> 51.5% on the noisier true store),
+so yesterday's caveat resolved in the bet's favor; (2) probe-type ablation
+REPLICATES on true stores (BEAM entity 84 / adjacency 39, LME entity 27 /
+adjacency 5, chain/temporal/decomposition ZERO at valid budgets) — the v0
+mechanism is definitively entity-refocus + order-adjacency, and yesterday's
+"humbler mechanism" caveat was not store bias; (3) scope claim for the
+paper: interrogation pays in the single-dense-chat regime (BEAM: gold
+scattered beyond aperture in one coherent history), NOT in the
+many-short-sessions regime (LME: deeper k suffices). Build nothing that
+claims LME gains from interrogation; LME serves as the boundary-condition
+negative control. content_absent=0 on true BEAM store (all 511 gold ids
+present); B=80+ void on BEAM by saturation (stores 78-115 turns).
+
 ## Retrieval and BM25: keep the questions separate
 
 LongMemEval-S BM25 top-20 averages roughly 700 reader tokens in the published
