@@ -112,6 +112,7 @@ def _generate_via_openrouter(
     app_url: str,
     app_title: str,
     provider_routing: dict[str, Any] | None = None,
+    reasoning: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     api_key = os.environ.get(api_key_env)
     if not api_key:
@@ -150,6 +151,8 @@ def _generate_via_openrouter(
     }
     if _provider_routing:
         payload["provider"] = _provider_routing
+    if reasoning:
+        payload["reasoning"] = reasoning
     headers = {
         "Authorization": f"Bearer {api_key}",
         "HTTP-Referer": app_url,
@@ -201,6 +204,8 @@ def _generate_via_openrouter(
         "prompt_tokens": int(usage.get("prompt_tokens") or 0),
         "completion_tokens": int(usage.get("completion_tokens") or 0),
         "latency_ms": round(latency_ms, 3),
+        "serving_provider": body.get("provider") if isinstance(body, dict) else None,
+        "served_model": body.get("model") if isinstance(body, dict) else None,
         "error": None if success else body,
     }
 
@@ -218,6 +223,7 @@ def generate_answer(
     app_url: str = DEFAULT_APP_URL,
     app_title: str = "anonymous-rag-compression-artifact",
     provider_routing: dict[str, Any] | None = None,
+    reasoning: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     if provider == "ollama":
         return _generate_via_ollama(
@@ -240,5 +246,6 @@ def generate_answer(
             app_url=app_url,
             app_title=app_title,
             provider_routing=provider_routing,
+            reasoning=reasoning,
         )
     raise ValueError(f"Unsupported provider: {provider}")

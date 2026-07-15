@@ -1,0 +1,53 @@
+{
+  "config_version": "pilot_qwen35_9b_bf16_v0",
+  "description": "Validation-only matched-content response-surface pilot with a BF16-pinned Qwen3.5-9B reader.",
+  "styles": [
+    "raw",
+    "selected_raw",
+    "selected_extractive",
+    "structured",
+    "structured_quotes"
+  ],
+  "budgets": [400],
+  "style_budgets": {
+    "raw": [0, 400],
+    "selected_raw": [400],
+    "selected_extractive": [400],
+    "structured": [400],
+    "structured_quotes": [400]
+  },
+  "tiktoken_encoding": "cl100k_base",
+  "seed": 42,
+  "temperature": 0.0,
+  "parallelism": 32,
+  "evaluation_split": {
+    "strategy": "hash_by_example_id",
+    "seed": 42,
+    "train_fraction": 0.6,
+    "validation_fraction": 0.2,
+    "test_fraction": 0.2,
+    "pilot_split": "validation"
+  },
+  "packager_params": {
+    "structured_quotes": {
+      "structured_fraction": 0.6
+    }
+  },
+  "reader": {
+    "model": "qwen/qwen3.5-9b",
+    "provider": "openrouter",
+    "base_url": "https://openrouter.ai/api/v1",
+    "api_key_env": "OPENROUTER_API_KEY",
+    "max_tokens": 64,
+    "timeout_s": 60.0,
+    "provider_routing": {
+      "order": ["deepinfra/bf16"],
+      "quantizations": ["bf16"],
+      "allow_fallbacks": false,
+      "require_parameters": true
+    },
+    "reasoning": {
+      "effort": "none"
+    }
+  }
+}

@@ -1,0 +1,391 @@
+{
+  "fingerprint": "f68251277315bc7a",
+  "sieve": [
+    {
+      "example_id": "lmf500-001",
+      "question": "What degree did I graduate with?",
+      "question_type": "single-session-user",
+      "compiled_token_count": 66,
+      "selected_memory_ids": [
+        "answer_280352e9"
+      ],
+      "rendered_evidence_package": {
+        "slots": {
+          "answer_hint": {
+            "display_text": "Business Administration"
+          }
+        },
+        "evidence_lines": [
+          {
+            "text": "User graduated with a degree in Business Administration"
+          }
+        ],
+        "compiler_type": "llm",
+        "pool_augmented": false
+      },
+      "prompt": "You are a careful conversational memory assistant.\nAnswer the user's question from the validated evidence below.\nRules:\n  - Return only the answer span: a name, phrase, number, date, or list. Preserve full names and modifiers.\n  - For yes/no questions, start with Yes or No.\n  - If the evidence is insufficient, answer exactly: Unknown.\n  - Validated slots below are machine-extracted hints. Cross-check them against the evidence lines before using.\n  - Derive your answer primarily from evidence lines. Use slots only if they are consistent with the evidence.\n\nQuestion: What degree did I graduate with?\n\n\nQuestion date: 2023/05/30 (Tue) 23:40\n\nCurrent dialogue context:\n1. None\n\nValidated evidence package:\nValidated slots:\n- answer_hint: Business Administration\n\nEvidence lines:\n1. User graduated with a degree in Business Administration\n\nAnswer:"
+    },
+    {
+      "example_id": "lmf500-002",
+      "question": "How long is my daily commute to work?",
+      "question_type": "single-session-user",
+      "compiled_token_count": 55,
+      "selected_memory_ids": [
+        "answer_40a90d51"
+      ],
+      "rendered_evidence_package": {
+        "question_family": "information_extraction",
+        "mode": "structured_json",
+        "schema_name": "AttributeLookup",
+        "target_entities": [
+          "daily commute",
+          "work"
+        ],
+        "subject_entities": [
+          "daily commute"
+        ],
+        "alternative_entities": [
+          "daily commute"
+        ],
+        "preferred_attributes": [],
+        "requirements": {
+          "direct_value": {
+            "slot_type": "direct_value",
+            "required": true,
+            "entity_key": "daily commute",
+            "attribute_key": "duration",
+            "expected_unit": "text"
+          },
+          "numeric_value": {
+            "slot_type": "numeric_operand",
+            "required": false,
+            "entity_key": "daily commute",
+            "attribute_key": "duration",
+            "expected_unit": "number"
+          }
+        },
+        "coverage": {
+          "direct_anchor": 2
+        },
+        "slots": {
+          "direct_value": {
+            "text": "45 minutes each way",
+            "display_text": "45 minutes each way",
+            "source_span_text": "I've been listening to audiobooks during my daily commute, which takes 45 minutes each way.",
+            "source_text": "I've been listening to audiobooks during my daily commute, which takes 45 minutes each way.",
+            "date": [
+              2023,
+              5,
+              22
+            ],
+            "memory_id": "answer_40a90d51",
+            "speaker": "user",
+            "unit_id": "answer_40a90d51:t01:o01",
+            "memory_text": "2023/05/22 (Mon) 21:18 session answer_40a90d51 | user: I've been listening to audiobooks during my daily commute, which takes 45 minutes each way."
+          },
+          "numeric_value": {
+            "text": "45 minutes",
+            "display_text": "45 minutes",
+            "source_span_text": "I've been listening to audiobooks during my daily commute, which takes 45 minutes each way.",
+            "source_text": "I've been listening to audiobooks during my daily commute, which takes 45 minutes each way.",
+            "date": [
+              2023,
+              5,
+              22
+            ],
+            "memory_id": "answer_40a90d51",
+            "speaker": "user",
+            "unit_id": "answer_40a90d51:t01:o01",
+            "memory_text": "2023/05/22 (Mon) 21:18 session answer_40a90d51 | user: I've been listening to audiobooks during my daily commute, which takes 45 minutes each way."
+          },
+          "direct_anchor": null
+        },
+        "validated_slots": {
+          "direct_value": {
+            "text": "45 minutes each way",
+            "display_text": "45 minutes each way",
+            "source_span_text": "I've been listening to audiobooks during my daily commute, which takes 45 minutes each way.",
+            "source_text": "I've been listening to audiobooks during my daily commute, which takes 45 minutes each way.",
+            "date": [
+              2023,
+              5,
+              22
+            ],
+            "memory_id": "answer_40a90d51",
+            "speaker": "user",
+            "unit_id": "answer_40a90d51:t01:o01",
+            "memory_text": "2023/05/22 (Mon) 21:18 session answer_40a90d51 | user: I've been listening to audiobooks during my daily commute, which takes 45 minutes each way."
+          },
+          "numeric_value": {
+            "text": "45 minutes",
+            "display_text": "45 minutes",
+            "source_span_text": "I've been listening to audiobooks during my daily commute, which takes 45 minutes each way.",
+            "source_text": "I've been listening to audiobooks during my daily commute, which takes 45 minutes each way.",
+            "date": [
+              2023,
+              5,
+              22
+            ],
+            "memory_id": "answer_40a90d51",
+            "speaker": "user",
+            "unit_id": "answer_40a90d51:t01:o01",
+            "memory_text": "2023/05/22 (Mon) 21:18 session answer_40a90d51 | user: I've been listening to audiobooks during my daily commute, which takes 45 minutes each way."
+          },
+          "direct_anchor": null
+        },
+        "answer_mode": "deterministic_numeric",
+        "compiler_answerable": true,
+        "invalid_slots": {},
+        "answer_text": "45 minutes each way",
+        "answer_units": [
+          "answer_40a90d51:t01:o01"
+        ],
+        "evidence_lines": [
+          {
+            "memory_id": "answer_40a90d51",
+            "speaker": "user",
+            "text": "2023/05/22 (Mon) 21:18 session answer_40a90d51 user: I've been listening to audiobooks during my daily commute, which takes 45 minutes each way.",
+            "unit_id": "answer_40a90d51:t01:o00"
+          },
+          {
+            "memory_id": "answer_40a90d51",
+            "speaker": "user",
+            "text": "user: daily commute time: 45 minutes each way",
+            "unit_id": "answer_40a90d51:t01:o01"
+          }
+        ],
+        "additional_context": [
+          {
+            "memory_id": "5209e813_2",
+            "date": "2023/05/27",
+            "lines": [
+              {
+                "speaker": "user",
+                "text": "user: By the way, speaking of furniture, I recently had my office chair repaired for $50, and it's made a huge difference in my work-from-home comfort.",
+                "memory_id": "5209e813_2",
+                "unit_id": "5209e813_2:t02:o01"
+              }
+            ]
+          },
+          {
+            "memory_id": "db73b7e4_4",
+            "date": "2023/05/20",
+            "lines": [
+              {
+                "speaker": "assistant",
+                "text": "assistant: * Every 2-3 months, depending on usage (daily wear, like in your case, may require more frequent conditioning) **Work the conditioner in:** Gently rub the conditioner into the leather using circular motions.",
+                "memory_id": "db73b7e4_4",
+                "unit_id": "db73b7e4_4:t01:o00"
+              }
+            ]
+          },
+          {
+            "memory_id": "5dce60dd",
+            "date": "2023/05/26",
+            "lines": [
+              {
+                "speaker": "assistant",
+                "text": "assistant: * Photos of their work",
+                "memory_id": "5dce60dd",
+                "unit_id": "5dce60dd:t01:o00"
+              }
+            ]
+          },
+          {
+            "memory_id": "db50c0f6",
+            "date": "2023/05/24",
+            "lines": [
+              {
+                "speaker": "assistant",
+                "text": "assistant: **Make it convenient**: Find ways to incorporate physical activity into your daily routine, such as taking the stairs instead of the elevator, walking to work, or doing a quick home workout during commercial breaks.",
+                "memory_id": "db50c0f6",
+                "unit_id": "db50c0f6:t01:o00"
+              }
+            ]
+          },
+          {
+            "memory_id": "7d8b5834_1",
+            "date": "2023/05/24",
+            "lines": [
+              {
+                "speaker": "assistant",
+                "text": "assistant: * Passing: Work on receiving serves and setting the ball with your forearms",
+                "memory_id": "7d8b5834_1",
+                "unit_id": "7d8b5834_1:t01:o00"
+              }
+            ]
+          },
+          {
+            "memory_id": "728deb4d_5",
+            "date": "2023/05/30",
+            "lines": [
+              {
+                "speaker": "assistant",
+                "text": "assistant: **Choose the right dumpling wrappers**: Fresh or frozen dumpling wrappers work well.",
+                "memory_id": "728deb4d_5",
+                "unit_id": "728deb4d_5:t01:o00"
+              }
+            ]
+          },
+          {
+            "memory_id": "ultrachat_246088",
+            "date": "2023/05/30",
+            "lines": [
+              {
+                "speaker": "assistant",
+                "text": "assistant: By addressing the various threats they face, such as climate change, habitat loss and fragmentation, hunting, and illegal wildlife trade, we can work towards a more sustainable future for gibbons.",
+                "memory_id": "ultrachat_246088",
+                "unit_id": "ultrachat_246088:t01:o00"
+              }
+            ]
+          },
+          {
+            "memory_id": "ultrachat_387144",
+            "date": "2023/05/23",
+            "lines": [
+              {
+                "speaker": "assistant",
+                "text": "assistant: These are just a few examples, as both poets have extensive bodies of work that touch on a range of themes.",
+                "memory_id": "ultrachat_387144",
+                "unit_id": "ultrachat_387144:t01:o00"
+              }
+            ]
+          },
+          {
+            "memory_id": "b5f561f5_2",
+            "date": "2023/05/26",
+            "lines": [
+              {
+                "speaker": "assistant",
+                "text": "assistant: Co-Creation**: Pair team members with different skill sets to work together on a specific aspect of the prototype, promoting cross-functional collaboration.",
+                "memory_id": "b5f561f5_2",
+                "unit_id": "b5f561f5_2:t01:o01"
+              }
+            ]
+          },
+          {
+            "memory_id": "65698aa9_4",
+            "date": "2023/05/26",
+            "lines": [
+              {
+                "speaker": "assistant",
+                "text": "assistant: **Choose your best work**: Select your strongest photos that fit the contest theme. **",
+                "memory_id": "65698aa9_4",
+                "unit_id": "65698aa9_4:t01:o00"
+              },
+              {
+                "speaker": "assistant",
+                "text": "assistant: Research the judges and previous winners**: Look at the judges' work and previous winners' photos.",
+                "memory_id": "65698aa9_4",
+                "unit_id": "65698aa9_4:t01:o01"
+              }
+            ]
+          }
+        ],
+        "compact_text": "- direct_value: 45 minutes each way\n- numeric_value: 45 minutes\n- direct_anchor: <missing>"
+      },
+      "prompt": ""
+    },
+    {
+      "example_id": "lmf500-003",
+      "question": "Where did I redeem a $5 coupon on coffee creamer?",
+      "question_type": "single-session-user",
+      "compiled_token_count": 54,
+      "selected_memory_ids": [
+        "answer_d61669c7"
+      ],
+      "rendered_evidence_package": {
+        "slots": {
+          "answer_hint": {
+            "display_text": "email inbox"
+          }
+        },
+        "evidence_lines": [
+          {
+            "text": "Redeemed a $5 coupon on coffee creamer last Sunday"
+          },
+          {
+            "text": "Coupon was found in email inbox"
+          },
+          {
+            "text": "Temporal: last Sunday (May 28, 2023)"
+          }
+        ],
+        "compiler_type": "llm",
+        "pool_augmented": false
+      },
+      "prompt": "You are a careful conversational memory assistant.\nAnswer the user's question from the validated evidence below.\nRules:\n  - Return only the answer span: a name, phrase, number, date, or list. Preserve full names and modifiers.\n  - For yes/no questions, start with Yes or No.\n  - If the evidence is insufficient, answer exactly: Unknown.\n  - Validated slots below are machine-extracted hints. Cross-check them against the evidence lines before using.\n  - Derive your answer primarily from evidence lines. Use slots only if they are consistent with the evidence.\n\nQuestion: Where did I redeem a $5 coupon on coffee creamer?\n\n\nQuestion date: 2023/05/30 (Tue) 20:42\n\nCurrent dialogue context:\n1. None\n\nValidated evidence package:\nValidated slots:\n- answer_hint: email inbox\n\nEvidence lines:\n1. Redeemed a $5 coupon on coffee creamer last Sunday\n2. Coupon was found in email inbox\n3. Temporal: last Sunday (May 28, 2023)\n\nAnswer:"
+    }
+  ],
+  "naive": [
+    {
+      "example_id": "lmf500-001",
+      "selected_memory_ids": [
+        "02bd2b90_3",
+        "answer_280352e9",
+        "f6859b48_2",
+        "sharegpt_Cr2tc1f_0",
+        "ultrachat_214101",
+        "5dac7cc2_1",
+        "41abc171_4",
+        "2ae4f277_2"
+      ],
+      "selected_memory_texts": [
+        "2023/05/30 (Tue) 11:27 session 02bd2b90_3 | assistant: * Position your chair at a comfortable height, with your feet flat on the floor or on a footrest, and your arms at a 90-degree angle to the keyboard.",
+        "2023/05/30 (Tue) 17:27 session answer_280352e9 | user: I graduated with a degree in Business Administration, which has definitely helped me in my new role. | assistant: Congratulations on your degree in Business Administration!",
+        "2023/05/20 (Sat) 15:03 session f6859b48_2 | assistant: I can totally imagine!",
+        "2023/05/20 (Sat) 05:50 session sharegpt_Cr2tc1f_0 | assistant: To represent the intensity of the script provided, we can estimate the intensity levels during the bank heist and escape scenes.",
+        "2023/05/28 (Sun) 03:47 session ultrachat_214101 | assistant: It is possible to shift towards a more global identity, but it would require significant changes in cultural norms, political structures, and social values.",
+        "2023/05/22 (Mon) 14:37 session 5dac7cc2_1 | assistant: A good yoga mat is essential for a comfortable and safe practice!",
+        "2023/05/22 (Mon) 14:27 session 41abc171_4 | assistant: I completely agree with you on the Mavericks' needs and potential targets.",
+        "2023/05/23 (Tue) 13:25 session 2ae4f277_2 | assistant: Excellent!"
+      ]
+    },
+    {
+      "example_id": "lmf500-002",
+      "selected_memory_ids": [
+        "answer_40a90d51",
+        "db73b7e4_4",
+        "afe04238_1",
+        "ultrachat_392094",
+        "5dce60dd",
+        "db50c0f6",
+        "ultrachat_498215",
+        "628c958c_7"
+      ],
+      "selected_memory_texts": [
+        "2023/05/22 (Mon) 21:18 session answer_40a90d51 | user: I've been listening to audiobooks during my daily commute, which takes 45 minutes each way.",
+        "2023/05/20 (Sat) 03:29 session db73b7e4_4 | assistant: * Every 2-3 months, depending on usage (daily wear, like in your case, may require more frequent conditioning) **Work the conditioner in:** Gently rub the conditioner into the leather using circular motions. | user: I've been wearing my new boots almost daily since January 15th, and I want to make sure they last long.",
+        "2023/05/25 (Thu) 22:55 session afe04238_1 | assistant: **Connect the dots:** Try to relate the concepts you learn from documentaries to your daily experiences. For instance, if you're watching a documentary on astronomy, think about how the principles of gravity or orbital mechanics might apply to your daily life, such as understanding the tides or the motion of objects on Earth. | assistant: **Better retention:** The more you apply what you learn, the more likely you are to remember it in the long run. **Real-world applications:** Look for ways to apply what you learn to your daily life, such as using astronomical concepts to understand the night sky or using historical knowledge to inform your decisions.",
+        "2023/05/24 (Wed) 14:32 session ultrachat_392094 | user: Can we make any small changes in our daily lives that would contribute to this cause? | assistant: Yes, individuals can contribute to coral reef conservation efforts through their daily activities. Small actions taken to protect the environment can have a significant impact on the health of coral reefs in the long run.",
+        "2023/05/26 (Fri) 11:34 session 5dce60dd | assistant: * Photos of their work | assistant: Winter can be tough on our shoes, and it's amazing that your boots have lasted this long with daily wear.",
+        "2023/05/24 (Wed) 18:16 session db50c0f6 | assistant: **Make it convenient**: Find ways to incorporate physical activity into your daily routine, such as taking the stairs instead of the elevator, walking to work, or doing a quick home workout during commercial breaks. Stay positive, and remember that consistency and patience are key to long-term success.",
+        "2023/05/28 (Sun) 16:37 session ultrachat_498215 | user: How effective do you think these initiatives will be in the long run? | assistant: The government and international organizations continue to work on new initiatives and innovations to help mitigate the effects of rising sea levels on this fragile island nation.",
+        "2023/05/27 (Sat) 23:28 session 628c958c_7 | assistant: Spider Plants produce baby plants, or \"spiderettes,\" on the ends of long stems. | user: Can you tell me how often I should be fertilizing my plants, and if there are any specific types of fertilizers that work better for certain plants?"
+      ]
+    },
+    {
+      "example_id": "lmf500-003",
+      "selected_memory_ids": [
+        "answer_d61669c7",
+        "98c198fb",
+        "217debf7",
+        "5c44d9fe_1",
+        "07ba9acd_2",
+        "sharegpt_hChsWOp_128",
+        "sharegpt_3vxz2Zr_0",
+        "8fa64936_1"
+      ],
+      "selected_memory_texts": [
+        "2023/05/29 (Mon) 13:28 session answer_d61669c7 | user: I actually redeemed a $5 coupon on coffee creamer last Sunday, which was a nice surprise since I didn't know I had it in my email inbox.",
+        "2023/05/28 (Sun) 15:47 session 98c198fb | assistant: **Handmade Coupon Book**: Create a book of coupons that she can redeem for things like \"one free game night,\" \"one free movie night,\" or \"one free dinner cooked by me.\" | assistant: **Ticket to Ride**: A train-themed game where players compete to build railroad routes across a map of North America. (2-5 players)",
+        "2023/05/30 (Tue) 20:13 session 217debf7 | assistant: 5. | assistant: **The Expanse** (Amazon Prime): A gritty, realistic sci-fi series set in a future where humanity has colonized the solar system. 5.",
+        "2023/05/24 (Wed) 09:33 session 5c44d9fe_1 | assistant: The coffee table is a great place to start decluttering. 5. | assistant: Remove clutter hotspots:** Identify areas that tend to accumulate clutter, such as coffee tables, shelves, or the floor. **5.",
+        "2023/05/22 (Mon) 23:57 session 07ba9acd_2 | assistant: 5. | assistant: 5. **Tea or instant coffee**: If you're a coffee or tea lover, consider packing individual packets or a travel-sized coffee maker.",
+        "2023/05/25 (Thu) 21:56 session sharegpt_hChsWOp_128 | assistant: * Map: A high-security military base where the player can find powerful weapons and gear, but must navigate through a maze of corridors and avoid traps set by the remaining military personnel guarding the facility. * Map: A remote research facility in the Arctic where the player discovers a group of scientists attempting to develop a cure for the zombie | assistant: Here are my thoughts on where the zombie types could appear in the different timelines:",
+        "2023/05/27 (Sat) 21:04 session sharegpt_3vxz2Zr_0 | assistant: The statement \"the guy who blew his entire lottery winnings on a limousine\" is a figure of speech.",
+        "2023/05/29 (Mon) 01:55 session 8fa64936_1 | assistant: 5. | assistant: You can also play \"License Plate Tag\" where kids try to spot license plates from different states. 5."
+      ]
+    }
+  ]
+}

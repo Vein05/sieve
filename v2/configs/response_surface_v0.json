@@ -1,0 +1,82 @@
+{
+  "config_version": "response_surface_v0",
+  "description": "SIEVE v2 reader x representation response-surface experiment configuration. All experiment parameters live here; no model IDs are hardcoded in code. See v2/README.md and research/idea-v2.md.",
+  "styles": [
+    "raw",
+    "filtered_raw",
+    "extractive",
+    "selected_raw",
+    "selected_extractive",
+    "structured",
+    "structured_quotes",
+    "summary",
+    "sieve_v1"
+  ],
+  "budgets": [200, 400, 800],
+  "style_budgets": {
+    "raw": [0, 200, 400, 800],
+    "filtered_raw": [200, 400, 800],
+    "extractive": [200, 400, 800],
+    "selected_raw": [200, 400, 800],
+    "selected_extractive": [200, 400, 800],
+    "structured": [200, 400, 800],
+    "structured_quotes": [200, 400, 800],
+    "summary": [200, 400, 800],
+    "sieve_v1": [0]
+  },
+  "tiktoken_encoding": "cl100k_base",
+  "seed": 42,
+  "temperature": 0.0,
+  "parallelism": 16,
+  "evaluation_split": {
+    "strategy": "hash_by_example_id",
+    "seed": 42,
+    "train_fraction": 0.6,
+    "validation_fraction": 0.2,
+    "test_fraction": 0.2,
+    "require_held_out_readers": true,
+    "comment": "Router claims require both unseen-query and unseen-reader evaluation. Budget 0 denotes an uncapped fixed control."
+  },
+  "packager_params": {
+    "filtered_raw": {
+      "relative_threshold": 0.5,
+      "comment": "Keep turns whose relevance >= relative_threshold * max_relevance."
+    },
+    "extractive": {
+      "min_sentence_chars": 10,
+      "comment": "Sentence-level extraction; top sentences by relevance, emitted in (memory rank, sentence position) order."
+    },
+    "structured_quotes": {
+      "structured_fraction": 0.6,
+      "comment": "Fraction of the budget given to the structured block; the remainder goes to the exact-quotes block."
+    },
+    "summary": {
+      "max_tokens_floor": 64,
+      "comment": "Abstractive summary via injected compile-LLM callable; max_tokens hint derived from budget, floored here."
+    }
+  },
+  "reader_panel": {
+    "comment": "Weak and mid reader IDs are pinned. Add at least two dated frontier IDs in a run-specific config before making unseen-reader claims.",
+    "weak": [
+      "meta-llama/llama-3.1-8b-instruct",
+      "qwen/qwen-2.5-7b-instruct"
+    ],
+    "mid": [
+      "meta-llama/llama-3.1-70b-instruct",
+      "qwen/qwen-2.5-32b-instruct"
+    ],
+    "strong": [],
+    "required_strong_readers": 2
+  },
+  "judge": {
+    "model": "deepseek/deepseek-chat-v3-0324",
+    "provider": "openrouter",
+    "mode": "longmemeval",
+    "comment": "Judge is run by cli/judge.py unchanged over the runner's run.json output."
+  },
+  "compile_model": {
+    "comment": "Default compile-LLM for the summary style. Only used at compile time, never in tests.",
+    "model": "qwen/qwen3-8b",
+    "provider": "openrouter"
+  }
+}

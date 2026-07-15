@@ -1,0 +1,82 @@
+{
+  "config_version": "generic_cross_bench_v0",
+  "description": "v3 generic-packager cross-benchmark pilot. Tests whether GENERIC packagers (no v1 cache, no benchmark vocabulary) avoid the SIEVE-v1 ConvoMem collapse. Conditions: raw uncapped, raw@400, filtered_raw@400, extractive@400, summary@400, structured_generic@400, guarded_structured@400 on 100-query ConvoMem + HotpotQA slices. See research/v3-learned-compiler-proposal-2026-07.md ('$3-5 generic-packager pilot').",
+  "styles": [
+    "raw",
+    "filtered_raw",
+    "extractive",
+    "summary",
+    "structured_generic",
+    "guarded_structured"
+  ],
+  "budgets": [0, 400],
+  "style_budgets": {
+    "raw": [0, 400],
+    "filtered_raw": [400],
+    "extractive": [400],
+    "summary": [400],
+    "structured_generic": [400],
+    "guarded_structured": [400]
+  },
+  "slices": {
+    "comment": "Both pilot slices are schema-compatible with the v2 runner (example_id, query, candidate_memories[{memory_id, content}], question_date). HotpotQA rows have question_date=None and no date-prefixed content.",
+    "convomem": "dataset-slices/convomem_bm25_top20_v1.jsonl",
+    "hotpotqa": "dataset-slices/hotpotqa_distractor_500_v1.jsonl"
+  },
+  "tiktoken_encoding": "cl100k_base",
+  "seed": 42,
+  "temperature": 0.0,
+  "parallelism": 16,
+  "evaluation_split": {
+    "strategy": "hash_by_example_id",
+    "seed": 42,
+    "train_fraction": 0.6,
+    "validation_fraction": 0.2,
+    "test_fraction": 0.2,
+    "require_held_out_readers": true,
+    "comment": "Pilot uses a 100-query slice per benchmark (--limit 100). Budget 0 denotes the uncapped raw control."
+  },
+  "packager_params": {
+    "filtered_raw": {
+      "relative_threshold": 0.5,
+      "comment": "Keep turns whose relevance >= relative_threshold * max_relevance."
+    },
+    "extractive": {
+      "min_sentence_chars": 10,
+      "comment": "Sentence-level extraction; top sentences by relevance, source chronology."
+    },
+    "structured_generic": {
+      "comment": "No tunable params; MIN_EVIDENCE_TOKENS floor is a module constant."
+    },
+    "guarded_structured": {
+      "comment": "No tunable params; COVERAGE_MIN_FRACTION guard threshold is a module constant."
+    },
+    "summary": {
+      "max_tokens_floor": 64,
+      "comment": "Abstractive summary via injected compile-LLM; needs --compile-model at compile time."
+    }
+  },
+  "reader_panel": {
+    "comment": "Pilot readers: 2-3 weak/mid open readers. Frontier IDs added in a run-specific override before unseen-reader claims.",
+    "weak": [
+      "meta-llama/llama-3.1-8b-instruct",
+      "qwen/qwen-2.5-7b-instruct"
+    ],
+    "mid": [
+      "qwen/qwen-2.5-72b-instruct"
+    ],
+    "strong": [],
+    "required_strong_readers": 0
+  },
+  "judge": {
+    "model": "deepseek/deepseek-chat-v3-0324",
+    "provider": "openrouter",
+    "mode": "longmemeval",
+    "comment": "Judge held constant with the published paper for comparability (deepseek-chat-v3, GPT-4o cross-check kappa 0.89-0.92). Do NOT swap for a local judge without flagging comparability loss."
+  },
+  "compile_model": {
+    "comment": "Compile-LLM for the summary style only. Never used in tests or offline smoke runs.",
+    "model": "qwen/qwen3-8b",
+    "provider": "openrouter"
+  }
+}
