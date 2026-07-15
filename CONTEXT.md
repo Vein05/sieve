@@ -483,6 +483,35 @@ claims LME gains from interrogation; LME serves as the boundary-condition
 negative control. content_absent=0 on true BEAM store (all 511 gold ids
 present); B=80+ void on BEAM by saturation (stores 78-115 turns).
 
+**CONVERSION EXPERIMENT (same day, ~$5.57, 404 tests pass): CLEAN KILL —
+the interrogator does NOT convert to reader accuracy and must not be built
+as specified.** Writeup: `research/interrogator-v0-conversion-2026-07.md`;
+runs: `results/answer_generation_runs/interrogator_v0_conversion/`.
+Four conditions (fixed top-20 / adaptive-k / interrogator / gold-injection
+ceiling) x two readers (Llama-3.1-8B, Qwen-2.5-72B) on the retrieval-bound
+BEAM cohort at matched evidence budget E=24K tokens. Pre-registered
+primary metric (interrogator minus adaptive-k on missing-gold rows):
+**+0.0pp on both readers** (needed >=3pp); Qwen do-no-harm violated
+(-3.9pp — acquisition evicts gold-bearing pool turns under matched
+budget). THE DECISIVE FINDING IS THE CEILING: injecting ALL missing gold
+buys +1.2pp (Llama) / +0.0pp (Qwen) — the entire acquisition axis is
+second-order for readers on these abilities. event_ordering and
+multi_session are 0% in EVERY condition INCLUDING the oracle ceiling, for
+both readers — consistent with all published systems scoring 0.00-0.08:
+these abilities are READER-REASONING-BOUND, not retrieval-bound.
+Mechanism of the offline/online gap: turn-level probe exclusivity != 
+row-level answerability — exclusive turns cluster on rows where k already
+recovers other gold (row-level exclusive: 6 vs 6, net zero). BINDING
+CONSEQUENCES: (1) the "compiler as interrogator" core bet is DEAD as a
+method; the reachability result survives only as a retrieval-analysis
+observation; (2) acquisition-side work on BEAM retrieval-bound abilities
+is closed — three gates (kill-test, confirmation, conversion) now form a
+complete pre-registered negative arc; (3) the live headline bet is the
+REPRESENTATION side: supersession chain rendering vs resolve-to-latest on
+knowledge_update + contradiction_resolution (pools already complete there,
+failure is universal, and the intervention targets reader reasoning — the
+actual bottleneck this experiment isolated).
+
 ## Retrieval and BM25: keep the questions separate
 
 LongMemEval-S BM25 top-20 averages roughly 700 reader tokens in the published

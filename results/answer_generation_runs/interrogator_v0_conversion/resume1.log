@@ -1,0 +1,38 @@
+WARNING: finish_reason=length for qwen/qwen-2.5-72b-instruct (completion=128, max_tokens=128). Reasoning models may need --max-tokens 4096+.
+WARNING: finish_reason=length for qwen/qwen-2.5-72b-instruct (completion=128, max_tokens=128). Reasoning models may need --max-tokens 4096+.
+WARNING: finish_reason=length for qwen/qwen-2.5-72b-instruct (completion=128, max_tokens=128). Reasoning models may need --max-tokens 4096+.
+WARNING: finish_reason=length for qwen/qwen-2.5-72b-instruct (completion=128, max_tokens=128). Reasoning models may need --max-tokens 4096+.
+WARNING: finish_reason=length for qwen/qwen-2.5-72b-instruct (completion=128, max_tokens=128). Reasoning models may need --max-tokens 4096+.
+WARNING: finish_reason=length for qwen/qwen-2.5-72b-instruct (completion=128, max_tokens=128). Reasoning models may need --max-tokens 4096+.
+WARNING: finish_reason=length for qwen/qwen-2.5-72b-instruct (completion=128, max_tokens=128). Reasoning models may need --max-tokens 4096+.
+WARNING: finish_reason=length for meta-llama/llama-3.1-8b-instruct (completion=128, max_tokens=128). Reasoning models may need --max-tokens 4096+.
+WARNING: finish_reason=length for qwen/qwen-2.5-72b-instruct (completion=128, max_tokens=128). Reasoning models may need --max-tokens 4096+.
+WARNING: finish_reason=length for qwen/qwen-2.5-72b-instruct (completion=128, max_tokens=128). Reasoning models may need --max-tokens 4096+.
+WARNING: finish_reason=length for qwen/qwen-2.5-72b-instruct (completion=128, max_tokens=128). Reasoning models may need --max-tokens 4096+.
+WARNING: finish_reason=length for qwen/qwen-2.5-72b-instruct (completion=128, max_tokens=128). Reasoning models may need --max-tokens 4096+.
+WARNING: finish_reason=length for qwen/qwen-2.5-72b-instruct (completion=128, max_tokens=128). Reasoning models may need --max-tokens 4096+.
+WARNING: finish_reason=length for qwen/qwen-2.5-72b-instruct (completion=128, max_tokens=128). Reasoning models may need --max-tokens 4096+.
+WARNING: finish_reason=length for meta-llama/llama-3.1-8b-instruct (completion=128, max_tokens=128). Reasoning models may need --max-tokens 4096+.
+WARNING: finish_reason=length for meta-llama/llama-3.1-8b-instruct (completion=128, max_tokens=128). Reasoning models may need --max-tokens 4096+.
+[fixed] meta-llama/llama-3.1-8b-instruct: retrying 12 failed calls
+  wrote results/answer_generation_runs/interrogator_v0_conversion/fixed__meta-llama__llama-3.1-8b-instruct/run.json (160 outputs, 0 failed)
+[fixed] qwen/qwen-2.5-72b-instruct: retrying 95 failed calls
+    qwen/qwen-2.5-72b-instruct 40/95
+    qwen/qwen-2.5-72b-instruct 80/95
+  wrote results/answer_generation_runs/interrogator_v0_conversion/fixed__qwen__qwen-2.5-72b-instruct/run.json (160 outputs, 0 failed)
+[adaptive_k] meta-llama/llama-3.1-8b-instruct: retrying 15 failed calls
+  wrote results/answer_generation_runs/interrogator_v0_conversion/adaptive_k__meta-llama__llama-3.1-8b-instruct/run.json (160 outputs, 0 failed)
+[adaptive_k] qwen/qwen-2.5-72b-instruct: retrying 107 failed calls
+    qwen/qwen-2.5-72b-instruct 40/107
+    qwen/qwen-2.5-72b-instruct 80/107
+  wrote results/answer_generation_runs/interrogator_v0_conversion/adaptive_k__qwen__qwen-2.5-72b-instruct/run.json (160 outputs, 0 failed)
+[interrogator] meta-llama/llama-3.1-8b-instruct: retrying 33 failed calls
+  wrote results/answer_generation_runs/interrogator_v0_conversion/interrogator__meta-llama__llama-3.1-8b-instruct/run.json (160 outputs, 11 failed)
+[interrogator] qwen/qwen-2.5-72b-instruct: retrying 34 failed calls
+  wrote results/answer_generation_runs/interrogator_v0_conversion/interrogator__qwen__qwen-2.5-72b-instruct/run.json (160 outputs, 1 failed)
+[ceiling] meta-llama/llama-3.1-8b-instruct: retrying 90 failed calls
+    meta-llama/llama-3.1-8b-instruct 40/90
+    meta-llama/llama-3.1-8b-instruct 80/90
+  wrote results/answer_generation_runs/interrogator_v0_conversion/ceiling__meta-llama__llama-3.1-8b-instruct/run.json (160 outputs, 7 failed)
+[ceiling] qwen/qwen-2.5-72b-instruct: retrying 1 failed calls
+  wrote results/answer_generation_runs/interrogator_v0_conversion/ceiling__qwen__qwen-2.5-72b-instruct/run.json (160 outputs, 0 failed)
