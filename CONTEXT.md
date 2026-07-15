@@ -512,6 +512,25 @@ knowledge_update + contradiction_resolution (pools already complete there,
 failure is universal, and the intervention targets reader reasoning — the
 actual bottleneck this experiment isolated).
 
+**EVAL ARTIFACT DISCOVERED (next day): the conversion experiment's
+conclusions are UNSAFE and must be re-measured.** The shared reader prompt
+(`v2/replay_io.py` SHARED_READER_TEMPLATE) forces span-only answers +
+"answer exactly: Unknown" abstention + max_tokens 128, while BEAM
+hard-ability references require narrative/behavioral answers (ordered
+narratives; contradiction-flagging + clarification requests). Measured:
+Qwen-72B answers literally "Unknown" on 60-69% of rows in EVERY condition
+INCLUDING the oracle ceiling; Llama 21-31% plus derailed continuations.
+The experiment had no dynamic range, so BOTH the ceiling conclusion
+("acquisition second-order") and the interrogator-vs-adaptive-k null are
+downgraded to "unmeasured" — the interrogator kill is provisional pending
+re-run under task-appropriate eval. Offline reachability results are
+unaffected. This is the never-diagnosed MiMo 57.1->35.2 shared-prompt
+collapse biting a second time. Full analysis + 17-award-paper review +
+reshaped plan (fix eval -> re-run 4 conditions with 3 samples/row ->
+mechanism battery: CONCAT control, sorted-vs-scrambled, corruption test,
+two-step discrimination probe -> chain rendering as KP-type method):
+`research/award-papers-lessons-2026-07.md`.
+
 ## Retrieval and BM25: keep the questions separate
 
 LongMemEval-S BM25 top-20 averages roughly 700 reader tokens in the published
