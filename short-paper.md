@@ -292,6 +292,25 @@ Generative reader-conditioned compression is outside the bounded action space.
 
 ---
 
+## Changelog v3 → v3.1 (2026-07-23, later)
+
+- P3 RUN: pre-registered r<0.5 held 8/9 cells; violation = trained abstractive
+  compressor in-domain (HotpotQA r=0.576) → two-regime argument added
+  (Table 3, intro P3 bullet, abstract). Full numbers:
+  `results/v2_runs/p3_cross_benchmark/RESULTS.md`; frozen script
+  `analysis/p3_cross_benchmark.py` (8 tests passing).
+- Title → "Condition on the Query, Not the Reader" (punchy, actionable-first,
+  scope-safe; old title read as an unearned universal bound).
+- §7 rewritten: ragscale (arXiv 2606.21807) cited as dataset substrate, NOT
+  re-claimed; this paper's artifact = analysis layer + extension cells.
+- LaTeX skeleton built at `paper/` (ACL layout, Makefile, 4pp PDF compiles);
+  artifact folder at `release/`.
+- External review (3/4/3.5) folded into the handoff checklist: full-donor
+  learned baseline to earn "bound", equivalence CIs for ≤0.3pp, variance
+  decomposition, damage-overlap test, ANONYMITY rewrite (mandatory — "our own
+  prior work" phrasing must go third-person), exact P3 values (MuSiQue 0.498
+  is at-threshold), merge Tables 1+2.
+
 ## Changelog v2 → v3
 
 - Restructured around hypothesis → three derived predictions (P1–P3) →

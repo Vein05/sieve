@@ -1,5 +1,18 @@
 # SIEVE Experiment Repo
 
+## CURRENT STATUS (2026-07-23)
+
+**Active deliverable: ARR SHORT paper "Condition on the Query, Not the Reader" → EACL 2027, deadline Aug 3, 2026 AoE** (reviewer signup Aug 5). The reader-conditioning impossibility result. Read these first:
+
+- `research/handoff-2026-07-23-short-paper-eacl.md` — the decision record + full pre-submission checklist (incl. items from an external 3/4/3.5 review: full-donor learned baseline to earn the "bound", equivalence CIs, MANDATORY anonymity rewrite of "our own prior work" phrasing).
+- `short-paper.md` — the paper source (v3.1, changelog at bottom). LaTeX at `paper/` (`make quick` builds 4pp PDF). Artifact at `release/`.
+- `results/v2_runs/p3_cross_benchmark/RESULTS.md` — the pre-registered cross-benchmark test: held 8/9 cells; the violation (trained compressor in-domain, r=0.576) is the shared-signal regime.
+- `paper.md` — the LONG paper spine (four-axis audit + SIEVE v2 method) for the NEXT ARR cycle; do not cannibalize it into the short paper.
+
+Key repo facts: `data/router_matrix/v0.parquet` (191,277 cells, local, 10MB) powers all analyses offline; the SIEVE-as-method direction is dead (five axes measured at 2-4pp — see `research/v2-final-paper-spec-2026-07.md` and the pilot RESULTS docs); the "Concurrent work" section below governs the relationship to the prior paper.
+
+## Background
+
 This is a NEW paper building on top of SIEVE, the post-retrieval evidence compilation method. The original conversational memory evaluation paper is already published at EMNLP 2025 Findings. We are NOT rewriting that paper. This repo is for a standalone SIEVE method paper that extends and improves the compiler, targeting a main conference venue.
 
 ## What this is

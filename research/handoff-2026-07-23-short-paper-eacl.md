@@ -40,14 +40,16 @@ impossibility result lives in the short paper ONLY (see CLAUDE.md
    fees only if accepted (~$300 student virtual floor, EACL-2026 proxy);
    proceedings archival in ACL Anthology (main and Findings); an accepted
    paper = second qualifying pub for ARR reviewer eligibility.
-6. **In flight (Opus agent, commit follows)**: freezing P3 script →
-   `analysis/p3_cross_benchmark.py` + tests; `release/` artifact folder;
-   `paper/` LaTeX skeleton from the memory-eligibility overleaf layout
-   (acl.sty, sections/, Makefile, dummy PDF).
+6. **DONE (verified + committed)**: P3 frozen → `analysis/p3_cross_benchmark.py`
+   (8 tests pass; real-parquet rerun matches RESULTS.md exactly); `release/`
+   artifact folder (MIT, claims analysis layer + extension cells only);
+   `paper/` LaTeX skeleton (ACL layout, Makefile, compiles to 4pp PDF, 0
+   undefined refs). Title changed to **"Condition on the Query, Not the
+   Reader"** (paper/main.tex + short-paper.md).
 
 ## Remaining before Aug 3 (all offline/free)
 
-- [ ] Verify agent output: P3 rerun matches RESULTS.md; tests pass; PDF builds.
+- [x] Verify agent output: P3 rerun matches RESULTS.md; tests pass; PDF builds.
 - [ ] Baseline-vs-delta scatter exhibit (monotonicity shown, not asserted).
 - [ ] Per-question-type decomposition of the +2.5pp + fold stability.
 - [ ] Six-style pilot supplementary table.
