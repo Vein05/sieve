@@ -1,0 +1,22 @@
+\begin{abstract}
+Post-retrieval compression is reader-dependent, and the field's next step ---
+condition the compressor on reader identity --- is being actively pursued. We
+test it and find an inversion: given the \emph{maximal} conditioning signal (20
+donor readers' measured outcomes on the very row being routed), selecting
+evidence by the most similar reader scores 57.6 while ignoring reader identity
+and averaging scores 60.5. Conditioning subtracts value at fixed information.
+We explain this with one hypothesis --- the per-row routing signal is
+noise-dominated (per-row compression deltas of two readers correlate at only
+0.38/0.16) --- and confirm its three derived predictions on a
+21-reader~$\times$~500-query~$\times$~3-representation panel of frozen, replayed
+compilation outputs (191k judged cells): realizable reader-conditioned policies
+gain $\le0.3$pp over reader-blind counterparts; similarity-weighted ensembles
+gain $+0.25$pp over blind averaging; and the cross-reader correlations
+replicate on held-out benchmarks (8 of 9 pre-registered cells; the single
+violation --- a trained compressor in-domain, $r = 0.58$ --- is the
+shared-signal regime that reader-blind routing captures by construction). The
+query-conditioned rung of the same policy ladder gains $+2.5$pp with no reader
+information. For selection among fixed representations, the conditioning
+variable that pays is the query, not the reader. We release the matrix and all
+analysis code.
+\end{abstract}

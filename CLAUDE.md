@@ -112,3 +112,7 @@ These rules apply to all Python in this repo. Follow them when writing new code 
 ## Provenance
 
 Forked from `memory-eligibility-feasibility` repo (2026-07-13). Original results preserved there.
+
+## Concurrent work (active, do not cross-contaminate)
+
+The prior paper "Fixed RAG Compression Collapses Measured Reader Scaling" (arXiv 2606.21807, `../memory-eligibility-feasibility/paper/`) is UNPUBLISHED and under active ARR revision/resubmission (May 2026 cycle scored 2/3/3; reviews on OpenReview, submission 12575). Papers in this repo (`paper.md` long draft, `short-paper.md` ARR short for EACL 2027) build on that paper's ragscale dataset but must not re-claim it as a contribution or share any table/figure/number with it. Rules: (1) cite it as the dataset source and the claim under test; (2) declare it as related anonymous concurrent work on any ARR submission form; (3) the reader-conditioning impossibility result belongs to `short-paper.md` — do not also add it to the prior paper's revision. Data provenance: `data/router_matrix/v0.parquet` (191,277 cells, built 2026-07-14) ingests the prior paper's published runs (validation gate in `data/router_matrix/v0_summary.md` matches published numbers) PLUS post-freeze additions: ConvoMem and LoCoMo slices, LME dense/oracle slices, readers mimo-v2.5 and qwen3.6-27b, and additional summary cells.

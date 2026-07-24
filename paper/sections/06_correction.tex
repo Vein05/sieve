@@ -1,0 +1,13 @@
+\section{What This Corrects}
+\label{sec:correction}
+
+Our prior ``reader-blind oracle captures only $\sim$70\% of headroom'' framing
+\citep{panthi2026fixed} is technically true and practically misleading: the
+residual is partly judge noise harvested by hindsight oracles
+(\S\ref{sec:prize}) and otherwise unreachable by any realizable policy
+(\S\ref{sec:results}). Corrected summary: on this action space, reader identity
+is worth $\le0.3$pp to any policy we could construct, under both query holdout
+and reader-family holdout --- and the ensemble bound shows this is a property of
+the signal, not of our policy class: any capability vector, familiarity score,
+or routing embedding is a compression of strictly less information than the
+donors' realized outcomes that already fail.

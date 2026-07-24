@@ -29,3 +29,6 @@ handoff/
 # Scratch and third-party paper PDFs
 tmp/
 research/papers/
+
+# Related-work PDFs (local only, not pushed)
+/papers/

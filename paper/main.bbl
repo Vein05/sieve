@@ -1,0 +1,75 @@
+\begin{thebibliography}{11}
+\expandafter\ifx\csname natexlab\endcsname\relax\def\natexlab#1{#1}\fi
+
+\bibitem[{Anonymous(2025)}]{accrag2025}
+Anonymous. 2025.
+\newblock {ACC-RAG}: Adaptive context compression for retrieval-augmented
+  generation.
+\newblock \emph{arXiv preprint}.
+
+\bibitem[{Anonymous(2026{\natexlab{a}})}]{inferencedynamics2026}
+Anonymous. 2026{\natexlab{a}}.
+\newblock {InferenceDynamics}: Efficient routing of language models via
+  capability profiling.
+\newblock \emph{arXiv preprint}.
+
+\bibitem[{Anonymous(2026{\natexlab{b}})}]{poc2026}
+Anonymous. 2026{\natexlab{b}}.
+\newblock {PoC}: Preference-oriented context compression for
+  retrieval-augmented generation.
+\newblock \emph{arXiv preprint}.
+
+\bibitem[{Anonymous(2026{\natexlab{c}})}]{routeprofile2026}
+Anonymous. 2026{\natexlab{c}}.
+\newblock {RouteProfile}: Reader capability profiles for model routing.
+\newblock \emph{arXiv preprint}.
+
+\bibitem[{Hwang et~al.(2025)}]{hwang2025exit}
+Taeho Hwang et~al. 2025.
+\newblock \href {https://arxiv.org/abs/2412.12559} {{EXIT}: Context-aware
+  extractive compression for enhancing retrieval-augmented generation}.
+\newblock \emph{arXiv preprint arXiv:2412.12559}.
+
+\bibitem[{Jeong et~al.(2025)}]{jeong2025ecorag}
+Yeonseok Jeong et~al. 2025.
+\newblock \href {https://arxiv.org/abs/2506.05167} {{ECoRAG}:
+  Evidentiality-guided compression for long context {RAG}}.
+\newblock \emph{arXiv preprint arXiv:2506.05167}.
+
+\bibitem[{Jung et~al.(2025)Jung, Zhang, Zhou et~al.}]{jung2025favicomp}
+Dongwon Jung, Qin Zhang, Sungjin Zhou, et~al. 2025.
+\newblock \href {https://arxiv.org/abs/2409.12468} {Familiarity-aware evidence
+  compression for retrieval-augmented generation}.
+\newblock In \emph{Findings of the Association for Computational Linguistics:
+  EMNLP 2025}.
+
+\bibitem[{Ong et~al.(2024)Ong, Almahairi, Wu, Chiang, Wu, Gonzalez, Kadous, and
+  Stoica}]{ong2024routellm}
+Isaac Ong, Amjad Almahairi, Vincent Wu, Wei-Lin Chiang, Tianhao Wu, Joseph~E.
+  Gonzalez, M.~Waleed Kadous, and Ion Stoica. 2024.
+\newblock \href {https://arxiv.org/abs/2406.18665} {{RouteLLM}: Learning to
+  route {LLM}s with preference data}.
+\newblock \emph{arXiv preprint arXiv:2406.18665}.
+
+\bibitem[{Panthi and Abdelfattah(2026)}]{panthi2026fixed}
+Sugam Panthi and Rabab Abdelfattah. 2026.
+\newblock \href {https://arxiv.org/abs/2606.21807} {Fixed {RAG} compression
+  collapses measured reader scaling}.
+\newblock \emph{arXiv preprint arXiv:2606.21807}.
+
+\bibitem[{Xu et~al.(2024)Xu, Shi, and Choi}]{xu2024recomp}
+Fangyuan Xu, Weijia Shi, and Eunsol Choi. 2024.
+\newblock \href {https://arxiv.org/abs/2310.04408} {{RECOMP}: Improving
+  retrieval-augmented {LM}s with context compression and selective
+  augmentation}.
+\newblock In \emph{Proceedings of the International Conference on Learning
+  Representations}.
+
+\bibitem[{Zhang et~al.(2024)}]{adacomp2024}
+Qianchi Zhang et~al. 2024.
+\newblock \href {https://arxiv.org/abs/2409.01579} {{AdaComp}: Extractive
+  context compression with adaptive predictor for retrieval-augmented large
+  language models}.
+\newblock \emph{arXiv preprint arXiv:2409.01579}.
+
+\end{thebibliography}

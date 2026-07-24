@@ -1,0 +1,109 @@
+\section{Results: The Predictions, Confirmed}
+\label{sec:results}
+
+\begin{table}[t]
+\centering
+\small
+\begin{tabular}{@{}llcc@{}}
+\toprule
+policy & conditions on & acc & $\Delta$ \\
+\midrule
+always raw / summary / struct. & --- & 46.7 / 50.0 / 52.8 & --- \\
+per-reader best fixed & reader & 53.0 & $+0.2$ \\
+per-question-type & query & \textbf{55.3} & (cp.) \\
+per-(reader, q-type) & reader $\times$ query & 55.3 & $+0.0$ \\
+\quad $K{=}200$ calib.\ rows & reader $\times$ query & 54.8 & $-0.5$ \\
+reader-blind per-row oracle & hindsight (query) & 62.4 & --- \\
+per-(row, reader) oracle & hind.\ (reader$\times$query) & 65.8 & $+3.4$ \\
+\bottomrule
+\end{tabular}
+\caption{The policy ladder (accuracy, 10-fold CV; P1). $\Delta$ is versus the
+reader-blind counterpart.}
+\label{tab:ladder}
+\end{table}
+
+Every realizable reader-conditioned rung is within $\pm0.5$pp of its
+reader-blind counterpart; the best gains $+0.3$pp. Meanwhile query conditioning
+--- same ladder, no reader information --- gains $+2.5$pp. P1 holds
+(Table~\ref{tab:ladder}).
+
+\begin{table}[t]
+\centering
+\small
+\begin{tabular}{@{}llc@{}}
+\toprule
+policy for held-out reader & regime & acc \\
+\midrule
+always structured & fixed & 52.8 \\
+unweighted donor majority (blind) & ens.\ bound & 60.5 \\
+similarity-weighted donor vote & ens.\ bound & 60.8 \\
+single most-similar donor (hind.) & ens.\ bound & 57.6 \\
+\bottomrule
+\end{tabular}
+\caption{Transfer to a held-out reader (leave-family-out; P2). All ensemble rows
+share identical (maximal) information; only the use of reader identity varies.}
+\label{tab:transfer}
+\end{table}
+
+All three ensemble rows in Table~\ref{tab:transfer} share the identical
+(maximal) information; only the use of reader identity varies. Weighting by
+similarity: $+0.25$pp (17/21 readers). Concentrating on the most similar reader
+--- with hindsight --- loses 2.9pp to blind averaging. P2 holds: at fixed
+information, conditioning re-injects exactly the noise averaging removes. (The
+60.5 row is an information ceiling, not a deployable policy; it is not
+comparable to Table~\ref{tab:ladder} and is reported to show conditioning fails
+even \emph{above} deployability.)
+
+\begin{table}[t]
+\centering
+\small
+\begin{tabular}{@{}llcc@{}}
+\toprule
+benchmark & style pair & mean $r$ & \%\,$<0.5$ \\
+\midrule
+LongMemEval (ref.) & summary$-$raw & 0.16 & 100 \\
+LongMemEval (ref.) & struct.$-$raw & 0.36 & 93 \\
+HotpotQA & summary$-$raw & 0.39 & 91 \\
+HotpotQA & tr.-abstr.$-$raw & \textbf{0.58} & 25 \\
+HotpotQA & tr.-extr.$-$raw & 0.43 & 71 \\
+MuSiQue & summary$-$raw & 0.50 & 54 \\
+NQ & summary$-$raw & 0.24 & 98 \\
+NQ & tr.-abstr.$-$raw & 0.38 & 73 \\
+NQ & tr.-extr.$-$raw & 0.40 & 83 \\
+\bottomrule
+\end{tabular}
+\caption{P3, cross-benchmark replication: mean pairwise per-row delta
+correlation across readers (pre-registered threshold $r < 0.5$). Readers per
+cell: 19 (HotpotQA/MuSiQue/NQ), 22--24 (LongMemEval).}
+\label{tab:p3}
+\end{table}
+
+The pre-registered threshold holds in 8 of 9 cells (Table~\ref{tab:p3}); we
+report the violation rather than revising it away. The violating cell is the
+trained abstractive compressor evaluated in-domain --- the regime where
+compression decisions are most systematic. This maps the two regimes of the
+routing signal: \textbf{noise} (low $r$: per-row deltas are idiosyncratic, so
+conditioning on any reader re-injects noise --- P1/P2) and \textbf{shared
+signal} (high $r$: systematic evidence deletion damages all readers together, so
+reader-blind routing captures it by construction). Reader conditioning pays only
+in a third regime --- large, \emph{stable, reader-specific} per-row structure
+--- which no cell exhibits: where correlations are low the reader-specific
+residual is noise (split-half and transfer results, P1/P2), and where they are
+high the signal is not reader-specific at all.
+
+\paragraph{What is real at the aggregate level --- and why it doesn't help.}
+Per-reader action deltas are highly reliable (split-half $r = 0.845$ [0.737,
+0.911]). The dominant pattern is a capability trend --- representation effects
+shrink toward zero for the strongest readers --- which is why a capability
+scalar exhausts the signal ($+0.2$pp, Table~\ref{tab:ladder}). Stable
+\emph{exceptions} exist (equal-baseline pairs with opposite preferences: Phi-4
+summary $-3.6$ vs Gemma-3-12B $+7.2$ at raw $\approx 47$; OLMo-32B $+18.2$ vs
+MiMo-v2.5 $-10.0$), and they are precisely what per-reader policies try to
+exploit --- recovering $\le0.3$pp, because the exceptions are aggregate-level
+while the routing decision is per-row, where noise dominates.
+
+\paragraph{The query policy, operationally.} Six native LongMemEval question
+types mapped to representations per training fold (temporal $\rightarrow$
+structured; knowledge-update $\rightarrow$ raw; multi-session $\rightarrow$
+summary), applied to held-out queries; smallest type cell $\approx 30$ queries
+per test fold.

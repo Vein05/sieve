@@ -1,0 +1,14 @@
+\section{Related Work}
+\label{sec:related}
+
+Adaptive compressors adapt ratio or query complexity, never reader identity:
+RECOMP \citep{xu2024recomp}, EXIT \citep{hwang2025exit}, ECoRAG
+\citep{jeong2025ecorag}, AdaComp \citep{adacomp2024}, ACC-RAG
+\citep{accrag2025}, PoC \citep{poc2026}. FAVICOMP \citep{jung2025favicomp} is
+reader-aware but generative and white-box --- the case we explicitly do not
+bound. Routing work \citep{ong2024routellm, inferencedynamics2026,
+routeprofile2026} selects which model answers; we test the converse ---
+selecting evidence for a fixed model --- and find the per-row conditioning
+signal absent. \citet{panthi2026fixed} establish reader-dependence and its
+measurement consequences; this paper tests the method direction that work
+implies, and corrects its headroom implication (\S\ref{sec:correction}).

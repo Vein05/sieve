@@ -1,0 +1,80 @@
+\section{Introduction}
+\label{sec:intro}
+
+A fixed post-retrieval compressor affects readers asymmetrically: it rescues
+weak readers by removing noise they cannot filter and damages strong readers by
+dropping details they would have used \citep{panthi2026fixed, jeong2025ecorag,
+xu2024recomp}. The natural method-side response is under way: condition the
+compression on the reader. FAVICOMP \citep{jung2025favicomp} shapes evidence
+toward the target model's token distributions; the routing and
+capability-profiling literature \citep{ong2024routellm, inferencedynamics2026,
+routeprofile2026} supplies ever-richer reader representations a compression
+policy could condition on; and our own prior work quantified the invitation ---
+37\% of rows are mixed-label (the same evidence helps some readers and hurts
+others), and a reader-blind per-row oracle accesses only $\sim$70\% of routing
+headroom, implying the rest needs reader identity.
+
+Here is what happens when that invitation is accepted under the most favorable
+conditions we can construct. Take 21 readers with frozen, replayed evidence
+(three representations per query, 191{,}277 judged cells), hold one reader out,
+and give the routing policy the strongest conditioning signal that can exist:
+the \emph{measured outcomes} of the 20 other readers on the very row being
+routed --- strictly more information than any deployable reader-profiler could
+ever extract. Then compare two policies. Ignoring reader identity (majority
+vote across donors) scores \textbf{60.5}. Conditioning on it (follow the single
+most similar donor, with similarity chosen with test-set hindsight) scores
+\textbf{57.6}. Conditioning on the reader does not merely fail to help; \emph{at
+fixed information, it subtracts value.}
+
+We propose one hypothesis that explains the inversion, derive three predictions
+from it, and confirm all three.
+
+\paragraph{Hypothesis (noise-dominated routing signal).} The per-row,
+per-reader compression delta --- which representation helps \emph{this} reader
+on \emph{this} row --- is mostly noise around a shared query-level signal:
+per-row deltas of any two readers correlate at only 0.38 (structured$-$raw) and
+0.16 (summary$-$raw). If true, cross-reader averaging \emph{denoises} the signal
+while conditioning on any one reader's identity or profile \emph{re-injects} the
+noise. This forces:
+
+\begin{itemize}[leftmargin=1.2em, itemsep=2pt]
+\item \textbf{P1.} No realizable reader-conditioned selection policy can
+  materially beat its reader-blind counterpart, regardless of features or
+  calibration budget. \emph{Confirmed:} across per-reader best-fixed ($+0.2$pp),
+  per-(reader, question-type) with up to 200 labeled calibration rows
+  ($+0.0$pp), and leave-family-out transfer ($+0.25$pp), no rung exceeds
+  $+0.3$pp (\S\ref{sec:results}, Table~\ref{tab:ladder}).
+\item \textbf{P2.} Inside the maximal-information ensemble regime, weighting
+  donors by similarity to the held-out reader adds $\sim$nothing over blind
+  averaging, and concentrating on the most similar donor actively loses.
+  \emph{Confirmed:} $+0.25$pp and $-2.9$pp respectively
+  (\S\ref{sec:results}, Table~\ref{tab:transfer}).
+\item \textbf{P3.} The low cross-reader correlation is a property of the routing
+  problem, not of conversational-memory QA: it must replicate on other
+  benchmarks in the same matrix. \emph{Outcome --- held in 8 of 9 cells,
+  violated in one, and the violation is informative.} We pre-registered
+  $r < 0.5$ before computing. Generic compression replicates everywhere (mean
+  pairwise $r$: HotpotQA 0.39, MuSiQue 0.50, NQ 0.24, vs 0.16 on LongMemEval).
+  The single violation is a \emph{trained} compressor on its own training
+  benchmark (RECOMP-style summary on HotpotQA: mean $r = 0.58$). High
+  cross-reader correlation is the \emph{shared-signal} regime: a trained
+  compressor deletes content systematically, damaging all readers together ---
+  which reader-blind routing captures by construction. Both regimes exclude
+  reader conditioning, for opposite reasons (\S\ref{sec:results}).
+\end{itemize}
+
+The same ladder that kills reader conditioning locates where adaptivity does
+pay: a \emph{query}-conditioned policy (question type $\rightarrow$
+representation) gains $+2.5$pp reader-blind, against $\le0.3$pp for reader
+identity. Scope, stated up front: this bounds \emph{selection among fixed
+representation styles} --- the action space of the adaptive-compression
+literature's routing variants. It does not bound generative reader-conditioned
+compression (white-box decoding-time shaping), which our black-box setting
+excludes.
+
+The practical conclusions: (i) condition on the query, not the reader;
+(ii) reader-conditioned compression papers should report the reader-blind
+ablation under reader-family holdout --- on our panel that ablation erases the
+conditioning gain entirely; (iii) multi-reader evaluation is not only a
+measurement obligation (as prior work argues) but the \emph{optimal
+policy-learning input}, because averaging across readers is the denoiser.

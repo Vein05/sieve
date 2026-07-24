@@ -1,0 +1,23 @@
+\section{Setup}
+\label{sec:setup}
+
+\paragraph{Panel.} 21 readers (7B--70B+, 11 families), complete uncapped triples
+on LongMemEval-S (500 queries): raw BM25 top-20, structured compilation, generic
+query-focused summary --- compiled once, replayed unchanged
+(compile-once/replay-many). Binary correctness by an LLM judge under a fixed
+protocol; judge-disagreement flags (4.3\% of cells) drive the noise controls.
+Five readers excluded for incomplete cells (availability-driven, not
+outcome-driven). Frozen evidence means every policy below --- including oracles
+and ensembles no deployable system could run --- is evaluated offline at zero
+marginal cost, which is what lets us \emph{bound} the axis rather than report one
+policy's failure.
+
+\paragraph{Policies (10-fold CV over queries).} Fixed: always-\{raw, structured,
+summary\}; per-reader best fixed. Query-conditioned: per-question-type
+(LongMemEval's six native categories), reader-blind. Reader-conditioned:
+per-(reader, question-type); calibration sweep $K \in \{25\text{--}200\}$
+rows/reader. Transfer (leave-reader-family-out, 100 reps), two regimes labeled
+explicitly: \emph{ensemble bound} --- donors' measured outcomes on the test row
+(information ceiling; requires running 20 readers per query);
+\emph{realizable} --- donor similarity estimated from a 100-query calibration
+split only. Oracles: reader-blind per-row; per-(row, reader).
