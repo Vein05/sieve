@@ -59,6 +59,32 @@ impossibility result lives in the short paper ONLY (see CLAUDE.md
       borderline).
 - [ ] ARR form: declare 2606.21807 as related anonymous concurrent work;
       fill Datasets/Software fields (the prior cycle's Datasets:1 lesson).
+
+### From external review 2026-07-23 (scored 3/4/3.5 — converges with panel)
+
+- [ ] **Earn the "bound": full-donor learned baseline.** Cross-fitted
+      learner (regularized logistic + one nonlinear) per held-out reader over
+      the 20-dim donor-outcome vector vs blind majority. If it loses too,
+      "bounded" is earned; if it wins, we must know first. Offline, matrix.
+- [ ] **Equivalence stats for ≤0.3pp**: 95% upper confidence bound on the
+      paired reader-conditioning increment (hierarchical bootstrap over
+      queries×readers). Claimed to move Soundness 3→3.5-4.
+- [ ] **Variance decomposition** Δ_qr = μ+α_q+β_r+γ_qr+ε: estimate stable
+      interaction γ. Caveat: single obs/cell confounds γ with ε — use
+      pre-dedup duplicates (28,688) + judge flags as noise floor for a
+      bounded estimate.
+- [ ] **Make the two-regime account predictive**: shared-signal predicts
+      damage-row overlap across readers is high in the violating cell
+      (trained-in-domain) vs low-r cells. Direct overlap statistic, offline.
+- [ ] **ANONYMITY (mandatory)**: rewrite "our own prior work"/self-correction
+      framing as third-person citations for the review version.
+- [ ] **P3 exact values + CIs** per cell (MuSiQue 0.498 rounds to the
+      threshold; "8 of 9" is rounding-vulnerable as stated).
+- [ ] **Title candidate**: "Condition on the Query, Not the Reader: A
+      Negative Result for Reader-Aware Evidence Selection" (actionable-first,
+      scope-safe).
+- [ ] Merge Tables 1+2; compact P3 for the 4-page budget.
+
 - [ ] Submit by Aug 3 AoE; reviewer signup by Aug 5.
 
 ## Review-cycle dates (EACL 2027)
