@@ -1,4 +1,4 @@
-# Selecting Evidence Representations by Reader Does Not Pay: A Bounded Negative Result for Reader-Conditioned Compression
+# Condition on the Query, Not the Reader
 
 *Working draft v3 (short-paper.md, 2026-07-23). ARR short paper (4 pages),
 EACL 2027 cycle (deadline Aug 3, 2026). Design rules for this draft, learned
